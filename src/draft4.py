@@ -1,41 +1,4 @@
-import math
-
-
-def format_float(n, format_str: str = ".0f", millify: bool = True) -> str:
-    """
-    Format float to string.
-    Sample usage:
-      - percentages: print(format_float(0.2, '.2%'))
-      - large dollar amounts: print(format_float(n=25489.76, format_str=',.2f', millify=True))
-
-    Parameters
-    ----------
-    n : float or int
-        Input Number
-    format_str : str, optional
-        Formatting string, default ".0f"
-    millify : bool, optional
-        Whether to convert large numbers to K/M/B/T, default True
-
-    Returns
-    -------
-    str
-        Output string
-    """
-    millnames = ["", " K", " M", " B", " T"]
-    n = float(n)
-    millidx = max(
-        0,
-        min(
-            len(millnames) - 1, int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))
-        ),
-    )
-    if millify:
-        value = n / 10 ** (3 * millidx)
-    else:
-        value = n
-        millidx = 0
-    return f"{{:{format_str}}}{{}}".format(value, millnames[millidx])
+from utils import format_float
 
 
 class Node:
@@ -52,6 +15,7 @@ class Node:
         self.format_str = format_str
         self.input_type = input_type
         self.readable_large_number = readable_large_number
+        self.rank = 0
 
     def pretty_value(self):
         """
@@ -75,13 +39,52 @@ class CalculatedNode(Node):
         assert (
             self.input_type == "calculation"
         ), "Relation node must be calculation type"
+        self.rank = 1
 
     def __repr__(self):
         node_description = f"{self.name} (Type: {self.input_type}, Definition: {self.definition}, Value:{self.pretty_value()})"
         return node_description
 
 
+class NodesCollection:
+    def __init__(self):
+        self.nodes = {}
+
+    def add_nodes(self, nodes_list: list):
+        for node in nodes_list:
+            if "definition" in node.keys():
+                self.nodes[node.name] = CalculatedNode(**node)
+            else:
+                self.nodes[node.name] = Node(**node)
+
+    def remove_node(self, node_name: str):
+        del self.nodes[node_name]
+
+    def get_node(self, name: str) -> Node:
+        for node in self.nodes:
+            if node.name == name:
+                return node
+        return None
+
+    def rank_nodes(self):
+        # Get list of all input nodes
+        # Get list of all calculated nodes
+        # subset list of calculated nodes where inputs are input nodes, rank 1
+        # subset list of calculated nodes where inputs are input nodes + rank 1 nodes, rank +=1
+        # repeat till all calculated noes covered
+        pass
+
+    def sort_nodes(self):
+        # Sorting the dictionary by the rank attribute of the node objects
+        self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
+
+    def __repr__(self):
+        return f"NodesCollection with {len(self.nodes)} nodes."
+
+
 class Funnel:
+    def __init__(self):
+        self.nodes = []
 
     def check_valid_definition(self):
         """Make sure that the definition of the relationship is valid and is safe"""
@@ -98,6 +101,6 @@ class Funnel:
         - repeat till all nodes covered
         """
 
-    def update_value(self):
+    def update_values(self):
         # This also needs to be in the collection class as it needs input from other node values
         self.value = safe_eval()
