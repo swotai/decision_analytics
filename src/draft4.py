@@ -1,3 +1,6 @@
+import re
+from typing import Optional
+
 from utils import format_float
 
 
@@ -47,60 +50,109 @@ class CalculatedNode(Node):
 
 
 class NodesCollection:
+    """
+    A funnel is a nodes collection
+    """
+
     def __init__(self):
         self.nodes = {}
 
     def add_nodes(self, nodes_list: list):
+        """Add nodes
+        This method is used for loading nodes from json as well as just manually adding nodes one by one.
+
+        Parameters
+        ----------
+        nodes_list : list
+            List of dictionaries each specifying one node. Can be either input or calculated node.
+        """
         for node in nodes_list:
             if "definition" in node.keys():
                 self.nodes[node.name] = CalculatedNode(**node)
             else:
                 self.nodes[node.name] = Node(**node)
+        self.check_valid_definitions()
+        self.rank_nodes()
 
     def remove_node(self, node_name: str):
         del self.nodes[node_name]
 
-    def get_node(self, name: str) -> Node:
+    def get_node(self, name: str) -> Optional[Node]:
         for node in self.nodes:
             if node.name == name:
                 return node
         return None
 
-    def rank_nodes(self):
-        # Get list of all input nodes
-        # Get list of all calculated nodes
-        # subset list of calculated nodes where inputs are input nodes, rank 1
-        # subset list of calculated nodes where inputs are input nodes + rank 1 nodes, rank +=1
-        # repeat till all calculated noes covered
-        pass
-
-    def sort_nodes(self):
-        # Sorting the dictionary by the rank attribute of the node objects
-        self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
-
-    def __repr__(self):
-        return f"NodesCollection with {len(self.nodes)} nodes."
-
-
-class Funnel:
-    def __init__(self):
-        self.nodes = []
-
-    def check_valid_definition(self):
+    def check_valid_definitions(self):
         """Make sure that the definition of the relationship is valid and is safe"""
-        # This can't happen inside calculated node, it has to happen inside the collection instead, as it needs to know the collection of input and calculated nodes.
-        # Check to make sure all vars are valid input nodes (meaning this needs to be done after all nodes are finish init)
-        # Check to make sure only allowed operators (+ - * / and () only )
 
-    def sort_calculated_nodes(self):
-        """
-        Sort calculated nodes by level of dependency
-        - go through list of all nodes, rank in order of:
-            - input nodes
-            - calculated nodes with all input nodes present
-        - repeat till all nodes covered
-        """
+        allowed_operators = set("+-*/() ")
+        for node in self.nodes.values():
+            if isinstance(node, CalculatedNode):
+                # Extract all variable names from the definition
+                variables = re.findall(r"\b\w+\b", node.definition)
+                for var in variables:
+                    if var not in self.nodes:
+                        raise ValueError(
+                            f"Variable '{var}' in node '{node.name}' is not a valid input node."
+                        )
+                # Check for invalid characters in the definition
+                for char in node.definition:
+                    if not char.isalnum() and char not in allowed_operators:
+                        raise ValueError(
+                            f"Invalid character '{char}' in definition of node '{node.name}'."
+                        )
+
+    def rank_nodes(self):
+        # Get list of all input nodes, no need to rank them.
+        input_nodes = [
+            node for node in self.nodes.values() if not isinstance(node, CalculatedNode)
+        ]
+
+        # Get list of all calculated nodes
+        calculated_nodes = [
+            node for node in self.nodes.values() if isinstance(node, CalculatedNode)
+        ]
+
+        # all input nodes get rank 0
+        for node in input_nodes:
+            node.rank = 0
+
+        # rank the calculated nodes
+        rank = 1
+        max_iterations = len(calculated_nodes)  # Prevent infinite loops
+        iteration_count = 0
+
+        while calculated_nodes and iteration_count < max_iterations:
+            iteration_count += 1
+            for node in calculated_nodes[:]:
+                variables = re.findall(r"\b\w+\b", node.definition)
+                # Check if all variables are resolved and ranked
+                if all(
+                    var in self.nodes and self.nodes[var].rank < rank
+                    for var in variables
+                ):
+                    node.rank = rank
+                    calculated_nodes.remove(node)
+
+            rank += 1
+
+        # Check if there are unranked nodes remaining
+        if calculated_nodes:
+            error_message = (
+                "Unresolvable dependencies detected for the following nodes:\n"
+            )
+            error_message += "\n".join(
+                f"{node.name} : {node.definition}" for node in calculated_nodes
+            )
+            raise ValueError(error_message)
+
+        # Sorting the nodes dictionary by the rank attribute of the node objects
+        self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
 
     def update_values(self):
         # This also needs to be in the collection class as it needs input from other node values
         self.value = safe_eval()
+
+    def __repr__(self):
+        return f"NodesCollection with {len(self.nodes)} nodes."
