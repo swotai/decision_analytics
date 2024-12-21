@@ -7,3 +7,4 @@ build/
 *.xls*
 *.DS_Store
 sandbox*.*
+.vscode/

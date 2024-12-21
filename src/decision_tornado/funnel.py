@@ -88,6 +88,14 @@ class NodesCollection:
                 return self.nodes[node]
         return None
 
+    def get_unused_nodes(self):
+        """Get a list of nodes that is not included in any calculated node definitions"""
+        used_nodes = set()
+        for node in self.nodes.values():
+            if isinstance(node, CalculatedNode):
+                used_nodes.update(re.findall(r"\b\w+\b", node.definition))
+        return [node for node in self.nodes.values() if node.name not in used_nodes]
+
     def check_valid_definitions(self):
         """Make sure that the definition of the relationship is valid and is safe"""
 

@@ -82,6 +82,26 @@ class TestNodesCollection(unittest.TestCase):
         self.assertIsNotNone(total_sales, "total_sales node should not be None")
         self.assertAlmostEqual(total_sales.value, 8000.0)
 
+    def test_get_unused_nodes(self):
+        # Expects to return unused nodes as well as the end funnel nodes,
+        # since those are not referenced in other calculated nodes anymore
+        self.nodes_collection.add_nodes(self.input_nodes)
+        self.nodes_collection.add_nodes(self.relationships)
+        self.nodes_collection.add_nodes(
+            [
+                {
+                    "name": "unused_value_test1",
+                    "value": 1,
+                    "format_str": "",
+                    "input_type": "input",
+                }
+            ]
+        )
+        unused_nodes = self.nodes_collection.get_unused_nodes()
+        unused_node_names = [node.name for node in unused_nodes]
+        expected_unused_nodes = ["unused_value_test1", "total_sales"]
+        self.assertCountEqual(unused_node_names, expected_unused_nodes)
+
 
 if __name__ == "__main__":
     unittest.main()
