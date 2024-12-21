@@ -34,9 +34,7 @@ class Node:
             return "N/A"
 
     def __repr__(self):
-        node_description = (
-            f"{self.name} (Type: {self.input_type}, Value:{self.pretty_value()})"
-        )
+        node_description = f"{self.name} (Type: {self.input_type}, Value:{self.pretty_value()}, Rank: {self.rank})"
         return node_description
 
 
@@ -52,7 +50,7 @@ class CalculatedNode(Node):
         self.rank = 1
 
     def __repr__(self):
-        node_description = f"{self.name} (Type: {self.input_type}, Definition: {self.definition}, Value:{self.pretty_value()})"
+        node_description = f"{self.name} (Type: {self.input_type}, Definition: {self.definition}, Value:{self.pretty_value()}, Rank: {self.rank})"
         return node_description
 
 
@@ -86,8 +84,8 @@ class NodesCollection:
 
     def get_node(self, name: str) -> Optional[Node]:
         for node in self.nodes:
-            if node.name == name:
-                return node
+            if node == name:
+                return self.nodes[node]
         return None
 
     def check_valid_definitions(self):
@@ -158,16 +156,38 @@ class NodesCollection:
         self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
 
     def update_values(self):
-        for node in self.nodes.values():
+        self.rank_nodes()
+        ordered_list = [node for node in self.nodes]
+        print("ordered list:", ordered_list)
+        for item in ordered_list:
+            node = self.nodes[item]
             if isinstance(node, CalculatedNode):
-                safe_eval = eval(
-                    f"lambda: {node.definition}",
-                    {},
-                    {
-                        var: self.nodes[var].value
-                        for var in re.findall(r"\b\w+\b", node.definition)
-                    },
-                )
+                import ast
+
+                # Create a safe dictionary of variables
+                safe_dict = {
+                    var: self.nodes[var].value
+                    for var in re.findall(r"\b\w+\b", node.definition)
+                    if self.nodes[var].value is not None
+                }
+
+                # Parse the definition into an AST node
+                node_ast = ast.parse(node.definition, mode="eval")
+
+                # Define a safe eval function
+                def safe_eval(node_ast, safe_dict):
+                    code = compile(node_ast, "<string>", "eval")
+                    print("===========================")
+                    print("processing:", node.name)
+                    print(node.definition)
+                    print(node_ast)
+                    print(code)
+                    print(safe_dict)
+                    print("===========================")
+                    return eval(code, {"__builtins__": None}, safe_dict)
+
+                # Evaluate the node definition safely
+                node.value = safe_eval(node_ast, safe_dict)
 
     def __repr__(self):
         return f"NodesCollection with {len(self.nodes)} nodes."
