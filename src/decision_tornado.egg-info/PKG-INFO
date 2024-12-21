@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: decision_tornado
+Version: 0.1.0
+Summary: Decision Analysis Library for Python, allowing for the creation of decision funnel diagrams and tornado diagrams.
+Author-email: Dennis Tai <swotai@gmail.com>
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

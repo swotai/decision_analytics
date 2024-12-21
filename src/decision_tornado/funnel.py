@@ -1,18 +1,22 @@
 import re
 from typing import Optional
 
-from utils import format_float
+from .utils import format_float
 
 
 class Node:
+
     def __init__(
         self,
         name: str,
-        value: float,
         format_str: str,
         input_type: str,
+        value: Optional[float] = None,
         readable_large_number: bool = True,
     ):
+        if input_type == "input" and value is None:
+            raise ValueError("Value must be provided when input_type is 'input'")
+
         self.name = name
         self.value = value
         self.format_str = format_str
@@ -24,7 +28,10 @@ class Node:
         """
         Pretty printing the value of the node, applying string formatting to the numeric value
         """
-        return format_float(self.value, self.format_str, self.readable_large_number)
+        if self.value is not None:
+            return format_float(self.value, self.format_str, self.readable_large_number)
+        else:
+            return "N/A"
 
     def __repr__(self):
         node_description = (
@@ -68,9 +75,9 @@ class NodesCollection:
         """
         for node in nodes_list:
             if "definition" in node.keys():
-                self.nodes[node.name] = CalculatedNode(**node)
+                self.nodes[node["name"]] = CalculatedNode(**node)
             else:
-                self.nodes[node.name] = Node(**node)
+                self.nodes[node["name"]] = Node(**node)
         self.check_valid_definitions()
         self.rank_nodes()
 
@@ -86,7 +93,7 @@ class NodesCollection:
     def check_valid_definitions(self):
         """Make sure that the definition of the relationship is valid and is safe"""
 
-        allowed_operators = set("+-*/() ")
+        allowed_operators = set("+-*/() _")
         for node in self.nodes.values():
             if isinstance(node, CalculatedNode):
                 # Extract all variable names from the definition

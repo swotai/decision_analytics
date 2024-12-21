@@ -1,4 +1,9 @@
 venv
 .venv
 *.pyc
+build/
 *.numbers
+*.csv
+*.xls*
+*.DS_Store
+sandbox*.*

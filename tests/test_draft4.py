@@ -1,5 +1,5 @@
 import unittest
-from src.funnel import Node, CalculatedNode, NodesCollection
+from decision_tornado.funnel import NodesCollection
 
 
 class TestNodesCollection(unittest.TestCase):
