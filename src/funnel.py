@@ -151,8 +151,16 @@ class NodesCollection:
         self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
 
     def update_values(self):
-        # This also needs to be in the collection class as it needs input from other node values
-        self.value = safe_eval()
+        for node in self.nodes.values():
+            if isinstance(node, CalculatedNode):
+                safe_eval = eval(
+                    f"lambda: {node.definition}",
+                    {},
+                    {
+                        var: self.nodes[var].value
+                        for var in re.findall(r"\b\w+\b", node.definition)
+                    },
+                )
 
     def __repr__(self):
         return f"NodesCollection with {len(self.nodes)} nodes."
