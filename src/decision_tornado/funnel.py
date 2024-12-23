@@ -11,6 +11,7 @@ class Node:
         name: str,
         format_str: str,
         input_type: str,
+        range: Optional[tuple] = None,
         long_name: Optional[str] = None,
         description: Optional[str] = None,
         value: Optional[float] = None,
@@ -19,13 +20,23 @@ class Node:
         if input_type == "input" and value is None:
             raise ValueError("Value must be provided when input_type is 'input'")
 
+        # metadata attributes
         self.name = name
-        self.value = value
-        self.format_str = format_str
         self.input_type = input_type
         self.readable_large_number = readable_large_number
         self.long_name = name if long_name is None else long_name
         self.description = description
+
+        # value and distribution attributes
+        self.value = value
+        self.format_str = format_str
+        if range is not None and len(range) != 3:
+            raise ValueError(
+                "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
+            )
+        self.range = range
+
+        # rank, for sorting nodes
         self.rank = 0
 
     def pretty_value(self):
