@@ -11,6 +11,8 @@ class Node:
         name: str,
         format_str: str,
         input_type: str,
+        long_name: Optional[str] = None,
+        description: Optional[str] = None,
         value: Optional[float] = None,
         readable_large_number: bool = True,
     ):
@@ -22,6 +24,8 @@ class Node:
         self.format_str = format_str
         self.input_type = input_type
         self.readable_large_number = readable_large_number
+        self.long_name = name if long_name is None else long_name
+        self.description = description
         self.rank = 0
 
     def pretty_value(self):
@@ -35,6 +39,10 @@ class Node:
 
     def __repr__(self):
         node_description = f"{self.name} (Type: {self.input_type}, Value:{self.pretty_value()}, Rank: {self.rank})"
+        return node_description
+
+    def get_chart_str(self):
+        node_description = f"{self.long_name}\n{self.pretty_value()}"
         return node_description
 
 
@@ -87,6 +95,16 @@ class NodesCollection:
             if node == name:
                 return self.nodes[node]
         return None
+
+    def get_input_nodes(self):
+        return [
+            node for node in self.nodes.values() if not isinstance(node, CalculatedNode)
+        ]
+
+    def get_calculated_nodes(self):
+        return [
+            node for node in self.nodes.values() if isinstance(node, CalculatedNode)
+        ]
 
     def get_unused_nodes(self):
         """Get a list of nodes that is not included in any calculated node definitions"""
@@ -185,13 +203,6 @@ class NodesCollection:
                 # Define a safe eval function
                 def safe_eval(node_ast, safe_dict):
                     code = compile(node_ast, "<string>", "eval")
-                    print("===========================")
-                    print("processing:", node.name)
-                    print(node.definition)
-                    print(node_ast)
-                    print(code)
-                    print(safe_dict)
-                    print("===========================")
                     return eval(code, {"__builtins__": None}, safe_dict)
 
                 # Evaluate the node definition safely
