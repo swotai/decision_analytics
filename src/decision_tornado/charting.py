@@ -9,14 +9,14 @@ def generate_funnel_chart_mermaid_code(nodes_collection: NodesCollection):
     mermaid_code = """---
 config:
   layout: elk
-  look: handDrawn
+  --look: handDrawn
   theme: forest
 ---
     
 flowchart TD
 """
     for node in nodes_collection.nodes.values():
-        mermaid_code += f"    {node.name}[{node.get_chart_str()}]\n"
+        mermaid_code += f"    {node.name}([{node.get_chart_str()}])\n"
 
     for node in nodes_collection.get_calculated_nodes():
         inputs = re.findall(r"\b\w+\b", node.definition)
