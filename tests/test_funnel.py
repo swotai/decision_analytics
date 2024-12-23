@@ -58,14 +58,14 @@ class TestNodesCollection(unittest.TestCase):
         self.nodes_collection.add_nodes(self.input_nodes)
         self.nodes_collection.add_nodes(self.relationships)
         try:
-            self.nodes_collection.check_valid_definitions()
+            self.nodes_collection._check_valid_definitions()
         except ValueError:
             self.fail("check_valid_definitions() raised ValueError unexpectedly!")
 
     def test_rank_nodes(self):
         self.nodes_collection.add_nodes(self.input_nodes)
         self.nodes_collection.add_nodes(self.relationships)
-        self.nodes_collection.rank_nodes()
+        self.nodes_collection._rank_nodes()
         ranks = [node.rank for node in self.nodes_collection.nodes.values()]
         self.assertEqual(ranks, [0, 0, 0, 0, 1, 2, 3])
 
