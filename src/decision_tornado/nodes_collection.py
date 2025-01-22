@@ -1,0 +1,159 @@
+import re
+from typing import Optional
+
+from decision_tornado import CalculatedNode, Node
+
+
+class NodesCollection:
+    """
+    A funnel is a collection of nodes.
+    """
+
+    def __init__(self):
+        self.nodes = {}
+
+    def add_nodes(self, nodes_list: list):
+        """Add nodes
+        This method is used for loading nodes from json as well as just manually adding nodes one by one.
+
+        Parameters
+        ----------
+        nodes_list : list
+            List of dictionaries each specifying one node. Can be either input or calculated node.
+        """
+        for node in nodes_list:
+            if "definition" in node.keys():
+                self.nodes[node["name"]] = CalculatedNode(**node)
+            else:
+                self.nodes[node["name"]] = Node(**node)
+        self._check_valid_definitions()
+        self._rank_nodes()
+
+    def remove_node(self, node_name: str):
+        del self.nodes[node_name]
+
+    def get_node(self, name: str) -> Optional[Node]:
+        for node in self.nodes:
+            if node == name:
+                return self.nodes[node]
+        return None
+
+    def get_input_nodes(self):
+        return [
+            node for node in self.nodes.values() if not isinstance(node, CalculatedNode)
+        ]
+
+    def get_calculated_nodes(self):
+        return [
+            node for node in self.nodes.values() if isinstance(node, CalculatedNode)
+        ]
+
+    def get_unused_nodes(self):
+        """Get a list of nodes that is not included in any calculated node definitions"""
+        used_nodes = set()
+        for node in self.nodes.values():
+            if isinstance(node, CalculatedNode):
+                used_nodes.update(re.findall(r"\b\w+\b", node.definition))
+        return [node for node in self.nodes.values() if node.name not in used_nodes]
+
+    def _check_valid_definitions(self):
+        """Make sure that the definition of the relationship is valid and is safe"""
+
+        allowed_operators = set("+-*/() _")
+        for node in self.nodes.values():
+            if isinstance(node, CalculatedNode):
+                # Extract all variable names from the definition
+                variables = re.findall(r"\b\w+\b", node.definition)
+                for var in variables:
+                    if var not in self.nodes:
+                        raise ValueError(
+                            f"Variable '{var}' in node '{node.name}' is not a valid input node."
+                        )
+                # Check for invalid characters in the definition
+                for char in node.definition:
+                    if not char.isalnum() and char not in allowed_operators:
+                        raise ValueError(
+                            f"Invalid character '{char}' in definition of node '{node.name}'."
+                        )
+
+    def _rank_nodes(self):
+        # Get list of all input nodes, no need to rank them.
+        input_nodes = [
+            node for node in self.nodes.values() if not isinstance(node, CalculatedNode)
+        ]
+
+        # Get list of all calculated nodes
+        calculated_nodes = [
+            node for node in self.nodes.values() if isinstance(node, CalculatedNode)
+        ]
+
+        # all input nodes get rank 0
+        for node in input_nodes:
+            node.rank = 0
+
+        # rank the calculated nodes
+        rank = 1
+        max_iterations = len(calculated_nodes)  # Prevent infinite loops
+        iteration_count = 0
+
+        while calculated_nodes and iteration_count < max_iterations:
+            iteration_count += 1
+            for node in calculated_nodes[:]:
+                variables = re.findall(r"\b\w+\b", node.definition)
+                # Check if all variables are resolved and ranked
+                if all(
+                    var in self.nodes and self.nodes[var].rank < rank
+                    for var in variables
+                ):
+                    node.rank = rank
+                    calculated_nodes.remove(node)
+
+            rank += 1
+
+        # Check if there are unranked nodes remaining
+        if calculated_nodes:
+            error_message = (
+                "Unresolvable dependencies detected for the following nodes:\n"
+            )
+            error_message += "\n".join(
+                f"{node.name} : {node.definition}" for node in calculated_nodes
+            )
+            raise ValueError(error_message)
+
+        # Sorting the nodes dictionary by the rank attribute of the node objects
+        self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
+
+    def update_values(self):
+        self._rank_nodes()
+        ordered_list = [node for node in self.nodes]
+        print("ordered list:", ordered_list)
+        for item in ordered_list:
+            node = self.nodes[item]
+            if isinstance(node, CalculatedNode):
+                import ast
+
+                # Create a safe dictionary of variables
+                safe_dict = {
+                    var: self.nodes[var].value
+                    for var in re.findall(r"\b\w+\b", node.definition)
+                    if self.nodes[var].value is not None
+                }
+
+                # Parse the definition into an AST node
+                node_ast = ast.parse(node.definition, mode="eval")
+
+                # Define a safe eval function
+                def safe_eval(node_ast, safe_dict):
+                    code = compile(node_ast, "<string>", "eval")
+                    return eval(code, {"__builtins__": None}, safe_dict)
+
+                # Evaluate the node definition safely
+                node.value = safe_eval(node_ast, safe_dict)
+
+    def __repr__(self):
+        input_nodes_count = len(self.get_input_nodes())
+        calculated_nodes_count = len(self.get_calculated_nodes())
+        return (
+            f"NodesCollection with {len(self.nodes)} nodes: "
+            f"{input_nodes_count} input nodes and {calculated_nodes_count} calculated nodes."
+        )
