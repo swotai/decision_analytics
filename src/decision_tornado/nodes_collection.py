@@ -1,7 +1,9 @@
+import logging
 import re
-from typing import Optional
 
 from decision_tornado import CalculatedNode, Node
+
+logging.basicConfig(level=logging.INFO)
 
 
 class NodesCollection:
@@ -32,11 +34,11 @@ class NodesCollection:
     def remove_node(self, node_name: str):
         del self.nodes[node_name]
 
-    def get_node(self, name: str) -> Optional[Node]:
+    def get_node(self, name: str) -> Node:
         for node in self.nodes:
             if node == name:
                 return self.nodes[node]
-        return None
+        raise ValueError(f"Node '{name}' does not exist.")
 
     def get_input_nodes(self):
         return [
@@ -47,6 +49,9 @@ class NodesCollection:
         return [
             node for node in self.nodes.values() if isinstance(node, CalculatedNode)
         ]
+
+    def __iter__(self):
+        return iter(self.nodes.values())
 
     def get_unused_nodes(self):
         """Get a list of nodes that is not included in any calculated node definitions"""
@@ -126,7 +131,8 @@ class NodesCollection:
     def update_values(self):
         self._rank_nodes()
         ordered_list = [node for node in self.nodes]
-        print("ordered list:", ordered_list)
+        logging.debug(f"Ordered list: {ordered_list}")
+
         for item in ordered_list:
             node = self.nodes[item]
             if isinstance(node, CalculatedNode):

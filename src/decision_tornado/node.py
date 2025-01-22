@@ -1,6 +1,9 @@
+import logging
 from typing import Optional
 
 from .utils import format_float
+
+logging.basicConfig(level=logging.INFO)
 
 
 class Node:
@@ -13,6 +16,7 @@ class Node:
         long_name: Optional[str] = None,
         description: Optional[str] = None,
         value: Optional[float] = None,
+        is_kpi: Optional[bool] = False,
         readable_large_number: bool = True,
     ):
         """Initializes a node object
@@ -91,9 +95,14 @@ class Node:
         node_description = f"{self.long_name}\n{self._pretty_value()}"
         return node_description
 
-    def add_value_percentiles(self, value_percentiles: tuple):
+    def update_value_percentiles(self, value_percentiles: tuple):
         if value_percentiles is not None and len(value_percentiles) != 3:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
             )
+        if not all(x < y for x, y in zip(value_percentiles, value_percentiles[1:])):
+            raise ValueError("Values in value_percentiles must be in ascending order")
         self.value_percentiles = value_percentiles
+        logging.info(
+            f"Added value percentiles to node {self.name}: {value_percentiles}"
+        )
