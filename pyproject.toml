@@ -1,5 +1,5 @@
 [project]
-name = "decision_tornado"
+name = "decision_analytics"
 version = "0.1.0"
 description = "Decision Analysis Library for Python, allowing for the creation of decision funnel diagrams and tornado diagrams."
 authors = [{ name = "Dennis Tai", email = "swotai@gmail.com" }]
