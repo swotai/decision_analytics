@@ -9,3 +9,4 @@ build/
 sandbox*.*
 .vscode/
 *.png
+*.egg-info/

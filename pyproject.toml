@@ -6,7 +6,7 @@ authors = [{ name = "Dennis Tai", email = "swotai@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pandas"]
 
 [project.optional-dependencies]
 dev = ["pytest", "mkdocs", "mkdocstrings"]
