@@ -3,8 +3,6 @@ import pandas as pd
 from decision_analytics import NodesCollection
 import logging
 
-logging.basicConfig(level=logging.INFO)
-
 
 class Funnel:
     def __init__(self, nodes_collection: NodesCollection):
@@ -27,6 +25,8 @@ class Funnel:
         for combo in all_combinations:
             combo_dict = dict(zip(inputs, combo))
             self.nodes_collection.set_node_values_from_dict(combo_dict)
+            logging.INFO(combo_dict)
+            logging.INFO(self.nodes_collection.get_input_nodes())
             self.nodes_collection.refresh_nodes()
             kpi_values = [node.value for node in self.nodes_collection.get_kpi_nodes()]
             results.append(

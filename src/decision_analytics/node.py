@@ -1,9 +1,7 @@
 import logging
 from typing import Optional
 
-from .utils import format_float
-
-logging.basicConfig(level=logging.INFO)
+from decision_analytics.utils import format_float
 
 
 class Node:
@@ -74,9 +72,10 @@ class Node:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
             )
-        self.value_percentiles = (
-            value_percentiles if value_percentiles is not None else [None, None, None]
-        )
+        # self.value_percentiles = (
+        #     value_percentiles if value_percentiles is not None else [None, None, None]
+        # )
+        self.value_percentiles = value_percentiles
         # rank, for sorting nodes
         self.rank = 0
 
@@ -107,7 +106,7 @@ class Node:
         if not all(x < y for x, y in zip(value_percentiles, value_percentiles[1:])):
             raise ValueError("Values in value_percentiles must be in ascending order")
         self.value_percentiles = value_percentiles
-        logging.info(
+        logging.INFO(
             f"Added value percentiles to node {self.name}: {value_percentiles}"
         )
 
@@ -123,4 +122,4 @@ class Node:
         if self.input_type == "input" and new_value is None:
             raise ValueError("Value must be provided when input_type is 'input'")
         self.value = new_value
-        logging.info(f"Updated value of node {self.name} to: {new_value}")
+        logging.INFO(f"Updated value of node {self.name} to: {new_value}")

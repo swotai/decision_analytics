@@ -1,4 +1,9 @@
 import math
+import logging
+
+
+def setup_logging(level=logging.INFO):
+    logging.basicConfig(level=level)
 
 
 def format_float(n, format_str: str = ".0f", millify: bool = True) -> str:

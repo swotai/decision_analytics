@@ -3,8 +3,6 @@ import re
 
 from decision_analytics import CalculatedNode, Node
 
-logging.basicConfig(level=logging.INFO)
-
 
 class NodesCollection:
     """
@@ -175,7 +173,7 @@ class NodesCollection:
     def refresh_nodes(self):
         self._rank_nodes()
         ordered_list = [node for node in self.nodes]
-        logging.debug(f"Ordered list: {ordered_list}")
+        logging.INFO(f"Ordered list: {ordered_list}")
 
         if not any(node.is_kpi for node in self.nodes.values()):
             logging.warning("No calculated node designated in the nodes collection.")
@@ -196,9 +194,22 @@ class NodesCollection:
                 node_ast = ast.parse(node.definition, mode="eval")
 
                 # Define a safe eval function
-                def safe_eval(node_ast, safe_dict):
+                def safe_eval1(node_ast, safe_dict):
                     code = compile(node_ast, "<string>", "eval")
                     return eval(code, {"__builtins__": None}, safe_dict)
+
+                def safe_eval(node_ast, safe_dict):
+                    try:
+                        logging.INFO(
+                            f"Evaluating AST: {ast.dump(node_ast)} with safe_dict: {safe_dict}"
+                        )
+                        code = compile(node_ast, "<string>", "eval")
+                        result = eval(code, {"__builtins__": None}, safe_dict)
+                        logging.INFO(f"Result of evaluation: {result}")
+                        return result
+                    except Exception as e:
+                        logging.error(f"Error during safe_eval: {e}")
+                        raise
 
                 # Evaluate the node definition safely
                 node.update_value(safe_eval(node_ast, safe_dict))
