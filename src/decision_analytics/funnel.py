@@ -7,8 +7,22 @@ import logging
 class Funnel:
     def __init__(self, nodes_collection: NodesCollection):
         self.nodes_collection = nodes_collection
+        self.sim_result = None
 
-    def simulate(self):
+    def simulate(self) -> None:
+        """_summary_
+        Simulates all variations of the funnel by looping through all nodes and their value percentiles.
+        Stores the results in self.sim_result.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If no KPI node is found in the funnel.
+        """
         # Given the nodes collection, simulate all the variation of the funnel by looping through all the nodes, and all the value percentiles of each node, and calculate the final outcome for each combination.
 
         # Make sure that the nodes_collection has at least 1 calculated node tagged is_kpi=True
@@ -36,4 +50,4 @@ class Funnel:
                 }
             )
         results_df = pd.DataFrame(results)
-        return results_df
+        self.sim_result = results_df
