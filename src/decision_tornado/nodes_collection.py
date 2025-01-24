@@ -14,6 +14,17 @@ class NodesCollection:
     def __init__(self):
         self.nodes = {}
 
+    def __iter__(self):
+        return iter(self.nodes.values())
+
+    def __repr__(self):
+        input_nodes_count = len(self.get_input_nodes())
+        calculated_nodes_count = len(self.get_calculated_nodes())
+        return (
+            f"NodesCollection with {len(self.nodes)} nodes: "
+            f"{input_nodes_count} input nodes and {calculated_nodes_count} calculated nodes."
+        )
+
     def add_nodes(self, nodes_list: list):
         """Add nodes
         This method is used for loading nodes from json as well as just manually adding nodes one by one.
@@ -34,6 +45,39 @@ class NodesCollection:
     def remove_node(self, node_name: str):
         del self.nodes[node_name]
 
+    def set_node_values_from_dict(self, values_dict: dict, lookup: bool = True):
+        for node_name, value in values_dict.items():
+            try:
+                node = self.get_node(node_name)
+                if node is None:
+                    raise ValueError(f"Node '{node_name}' does not exist.")
+                if isinstance(node, CalculatedNode):
+                    raise ValueError(
+                        f"Cannot set value for calculated node '{node_name}'."
+                    )
+                if not isinstance(value, (int, float)):
+                    raise ValueError(
+                        f"Value '{value}' is not a valid number for node '{node_name}'."
+                    )
+
+                if lookup:
+                    # Only do lookup if value_percentile exists. Otherwise don't update the value
+                    if node.value_percentiles:
+                        v = node.value_percentiles[value]
+                    else:
+                        v = node.value
+                else:
+                    v = value
+                node.value = v
+            except KeyError:
+                raise ValueError(
+                    f"Value '{value}' is not a valid value for node '{node_name}'."
+                )
+            except AttributeError:
+                raise ValueError(
+                    f"Node '{node_name}' does not have a 'value' attribute."
+                )
+
     def get_node(self, name: str) -> Node:
         for node in self.nodes:
             if node == name:
@@ -50,8 +94,8 @@ class NodesCollection:
             node for node in self.nodes.values() if isinstance(node, CalculatedNode)
         ]
 
-    def __iter__(self):
-        return iter(self.nodes.values())
+    def get_kpi_nodes(self):
+        return [node for node in self.nodes.values() if node.is_kpi]
 
     def get_unused_nodes(self):
         """Get a list of nodes that is not included in any calculated node definitions"""
@@ -128,10 +172,13 @@ class NodesCollection:
         # Sorting the nodes dictionary by the rank attribute of the node objects
         self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
 
-    def update_values(self):
+    def refresh_nodes(self):
         self._rank_nodes()
         ordered_list = [node for node in self.nodes]
         logging.debug(f"Ordered list: {ordered_list}")
+
+        if not any(node.is_kpi for node in self.nodes.values()):
+            logging.warning("No calculated node designated in the nodes collection.")
 
         for item in ordered_list:
             node = self.nodes[item]
@@ -154,12 +201,4 @@ class NodesCollection:
                     return eval(code, {"__builtins__": None}, safe_dict)
 
                 # Evaluate the node definition safely
-                node.value = safe_eval(node_ast, safe_dict)
-
-    def __repr__(self):
-        input_nodes_count = len(self.get_input_nodes())
-        calculated_nodes_count = len(self.get_calculated_nodes())
-        return (
-            f"NodesCollection with {len(self.nodes)} nodes: "
-            f"{input_nodes_count} input nodes and {calculated_nodes_count} calculated nodes."
-        )
+                node.update_value(safe_eval(node_ast, safe_dict))

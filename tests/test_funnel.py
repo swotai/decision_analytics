@@ -77,7 +77,7 @@ class TestNodesCollection(unittest.TestCase):
     def test_update_values(self):
         self.nodes_collection.add_nodes(self.input_nodes)
         self.nodes_collection.add_nodes(self.relationships)
-        self.nodes_collection.update_values()
+        self.nodes_collection.refresh_nodes()
         total_sales = self.nodes_collection.get_node("total_sales")
         self.assertIsNotNone(total_sales, "total_sales node should not be None")
         self.assertAlmostEqual(total_sales.value, 8000.0)

@@ -63,6 +63,9 @@ class Node:
         self.readable_large_number = readable_large_number
         self.long_name = name if long_name is None else long_name
         self.description = description
+        if is_kpi and input_type == "input":
+            raise ValueError("KPIs cannot be input node.")
+        self.is_kpi = is_kpi
 
         # value and distribution attributes
         self.value = value
@@ -71,8 +74,9 @@ class Node:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
             )
-        self.value_percentiles = value_percentiles
-
+        self.value_percentiles = (
+            value_percentiles if value_percentiles is not None else [None, None, None]
+        )
         # rank, for sorting nodes
         self.rank = 0
 
@@ -106,3 +110,17 @@ class Node:
         logging.info(
             f"Added value percentiles to node {self.name}: {value_percentiles}"
         )
+
+    def update_value(self, new_value: float):
+        """
+        Update the value of the node.
+
+        Parameters
+        ----------
+        new_value : float
+            The new value to set for the node.
+        """
+        if self.input_type == "input" and new_value is None:
+            raise ValueError("Value must be provided when input_type is 'input'")
+        self.value = new_value
+        logging.info(f"Updated value of node {self.name} to: {new_value}")

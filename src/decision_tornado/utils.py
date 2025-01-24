@@ -36,3 +36,7 @@ def format_float(n, format_str: str = ".0f", millify: bool = True) -> str:
         value = n
         millidx = 0
     return f"{{:{format_str}}}{{}}".format(value, millnames[millidx])
+
+
+def fit_data_with_metalog():
+    pass
