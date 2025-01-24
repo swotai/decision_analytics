@@ -2,7 +2,7 @@ import math
 import logging
 
 
-def setup_logging(level=logging.INFO):
+def setup_logging(level=logging.WARNING):
     logging.basicConfig(level=level)
 
 

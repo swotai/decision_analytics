@@ -106,7 +106,7 @@ class Node:
         if not all(x < y for x, y in zip(value_percentiles, value_percentiles[1:])):
             raise ValueError("Values in value_percentiles must be in ascending order")
         self.value_percentiles = value_percentiles
-        logging.INFO(
+        logging.debug(
             f"Added value percentiles to node {self.name}: {value_percentiles}"
         )
 
@@ -122,4 +122,4 @@ class Node:
         if self.input_type == "input" and new_value is None:
             raise ValueError("Value must be provided when input_type is 'input'")
         self.value = new_value
-        logging.INFO(f"Updated value of node {self.name} to: {new_value}")
+        logging.debug(f"Updated value of node {self.name} to: {new_value}")
