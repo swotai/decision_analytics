@@ -1,5 +1,5 @@
 import re
-from decision_tornado import NodesCollection
+from decision_analytics import NodesCollection
 
 
 def generate_funnel_chart_mermaid_code(nodes_collection: NodesCollection):

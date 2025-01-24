@@ -1,6 +1,6 @@
 import itertools
 import pandas as pd
-from decision_tornado import NodesCollection
+from decision_analytics import NodesCollection
 import logging
 
 logging.basicConfig(level=logging.INFO)

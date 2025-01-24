@@ -1,4 +1,4 @@
-from decision_tornado import Node
+from decision_analytics import Node
 
 
 class CalculatedNode(Node):

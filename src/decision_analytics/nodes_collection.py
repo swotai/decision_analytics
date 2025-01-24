@@ -1,7 +1,7 @@
 import logging
 import re
 
-from decision_tornado import CalculatedNode, Node
+from decision_analytics import CalculatedNode, Node
 
 logging.basicConfig(level=logging.INFO)
 
