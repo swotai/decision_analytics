@@ -71,9 +71,27 @@ class Funnel:
                     other_cols = [x for x in self.input_node_names if x != input]
                     lookup = df[(df[input] == i) & ((df[other_cols] == 1).all(axis=1))]
                     calculations_df.loc[input, f"{kpi}_{i}"] = lookup[kpi].values[0]
-        # Add swing (abs diff) and swing ^2
-        # What happen if there's a reverse relationship, so that the low-mid-high would lead to high-mid-low of kpi? interesting. I think in that case we should specify that input as "reverse" so that it's positive.
-        # e.g. churn, switch to survival.
-        # Because value base, most of the time if we are building the value funnel everything should more be positive correlation than negative.
+
+        # calculate swings
+        for kpi in self.kpi_node_names:
+            # max - min for all columns with column name starts with kpi_
+            kpi_cols = [x for x in calculations_df.columns if x.startswith(f"{kpi}_")]
+            calculations_df[f"{kpi}_swing"] = calculations_df[kpi_cols].max(
+                axis=1
+            ) - calculations_df[kpi_cols].min(axis=1)
+            # Add swing ^2
+            calculations_df[f"{kpi}_swing_squared"] = calculations_df[
+                f"{kpi}_swing"
+            ].apply(lambda x: x**2)
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_0"] = df[kpi].quantile(
+                0.1, interpolation="nearest"
+            )
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_1"] = df[kpi].quantile(
+                0.5, interpolation="nearest"
+            )
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_2"] = df[kpi].quantile(
+                0.9, interpolation="nearest"
+            )
+
         self.calculations_result = calculations_df
         return calculations_df
