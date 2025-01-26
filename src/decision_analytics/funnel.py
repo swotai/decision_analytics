@@ -105,6 +105,10 @@ class Funnel:
             calculations_df.loc["Combined Uncertainty", f"{kpi}_high"] = np.quantile(
                 df[kpi], 0.9, weights=df["weights"], method="inverted_cdf"
             )
+            calculations_df[f"% of Variance ({kpi})"] = (
+                calculations_df[f"{kpi}_swing_squared"]
+                / calculations_df[f"{kpi}_swing_squared"].sum()
+            )
         calculations_df.rename(
             index=self.nodes_collection.get_nodes_mapping(), inplace=True
         )
