@@ -79,7 +79,7 @@ class Node:
         # rank, for sorting nodes
         self.rank = 0
 
-    def _pretty_value(self):
+    def _pretty_value(self) -> str:
         """
         Pretty printing the value of the node, applying string formatting to the numeric value
         """
@@ -89,16 +89,23 @@ class Node:
             return "N/A"
 
     def __repr__(self):
-        node_description = f"{self.name} (Type: {self.input_type}, Value:{self._pretty_value()}, Rank: {self.rank})"
+        repr_node_desc = f"{self.name} (Type: {self.input_type}, Value:{self._pretty_value()}, Rank: {self.rank})"
         if self.value_percentiles:
-            node_description += f", Input Range: {self.value_percentiles}"
-        return node_description
+            repr_node_desc += f", Input Range: {self.value_percentiles}"
+        return repr_node_desc
 
-    def get_chart_str(self):
-        node_description = f"{self.long_name}\n{self._pretty_value()}"
-        return node_description
+    def get_chart_str(self) -> str:
+        """Pretty printing for pumping to mermaid chart
 
-    def update_value_percentiles(self, value_percentiles: tuple):
+        Returns
+        -------
+        str
+            String representation of the node description suitable for Mermaid chart.
+        """
+        chart_str = f"{self.long_name}\n{self._pretty_value()}"
+        return chart_str
+
+    def update_value_percentiles(self, value_percentiles: tuple) -> None:
         if value_percentiles is not None and len(value_percentiles) != 3:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
@@ -110,7 +117,7 @@ class Node:
             f"Added value percentiles to node {self.name}: {value_percentiles}"
         )
 
-    def update_value(self, new_value: float):
+    def update_value(self, new_value: float) -> None:
         """
         Update the value of the node.
 
