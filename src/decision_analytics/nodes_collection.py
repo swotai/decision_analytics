@@ -40,10 +40,38 @@ class NodesCollection:
         self._check_valid_definitions()
         self._rank_nodes()
 
-    def remove_node(self, node_name: str):
+    def remove_node(self, node_name: str) -> None:
+        """
+        Remove a node from the collection.
+        """
         del self.nodes[node_name]
 
-    def set_node_values_from_dict(self, values_dict: dict, lookup: bool = True):
+    def set_node_values_from_dict(self, values_dict: dict, lookup: bool = True) -> None:
+        """
+        Set the values of nodes from a dictionary. If lookup is True, it will look up the value from value_percentiles in the collection and set it to the node.
+        Otherwise, it will directly set the value to the node. This method is used in simulationg to set values dynamically
+
+        Parameters
+        ----------
+        values_dict : dict
+            Dictionary, with the input node name as key, and the desired value as value.
+            If using lookup, value should be one of [0,1,2]
+        lookup : bool, optional
+            Whether to lookup actual value of node from value_percentiles, by default True
+
+        Raises
+        ------
+        ValueError
+            If node does not exist
+        ValueError
+            If user tries to set value of a calculated node
+        ValueError
+            If the value provided is not a number (int/float)
+        ValueError
+            If the value provided is not a number (int/float)
+        ValueError
+            If the node doesn't have a 'value' attribute (this should be impossible)
+        """
         for node_name, value in values_dict.items():
             try:
                 node = self.get_node(node_name)
@@ -77,6 +105,24 @@ class NodesCollection:
                 )
 
     def get_node(self, name: str) -> Node:
+        """
+        Get a node by its name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the node
+
+        Returns
+        -------
+        Node
+            Reference to the node object
+
+        Raises
+        ------
+        ValueError
+            If user provided a name that doesn't exists in the collection.
+        """
         for node in self.nodes:
             if node == name:
                 return self.nodes[node]
@@ -95,13 +141,17 @@ class NodesCollection:
     def get_kpi_nodes(self):
         return [node for node in self.nodes.values() if node.is_kpi]
 
-    def get_unused_nodes(self):
+    def get_unused_nodes(self) -> list:
         """Get a list of nodes that is not included in any calculated node definitions"""
         used_nodes = set()
         for node in self.nodes.values():
             if isinstance(node, CalculatedNode):
                 used_nodes.update(re.findall(r"\b\w+\b", node.definition))
         return [node for node in self.nodes.values() if node.name not in used_nodes]
+
+    def get_nodes_mapping(self) -> dict:
+        """Get a dict where each key is each node's name and value is its corresponding long name"""
+        return {node.name: node.long_name for node in self.nodes.values()}
 
     def _check_valid_definitions(self):
         """Make sure that the definition of the relationship is valid and is safe"""
