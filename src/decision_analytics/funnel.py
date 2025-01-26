@@ -1,7 +1,9 @@
 import itertools
+import numpy as np
 import pandas as pd
 from decision_analytics import NodesCollection
 import logging
+from decision_analytics.utils import values_map
 
 
 class Funnel:
@@ -38,7 +40,7 @@ class Funnel:
             raise ValueError("No KPI node found in the funnel.")
 
         inputs = self.input_node_names
-        possible_values = [0, 1, 2]
+        possible_values = values_map.keys()
         kpis = self.kpi_node_names
 
         all_combinations = itertools.product(possible_values, repeat=len(inputs))
@@ -58,18 +60,29 @@ class Funnel:
                 }
             )
         results_df = pd.DataFrame(results)
+
+        pr_mapping = {key: values["pr"] for key, values in values_map.items()}
+        results_df["weights"] = results_df[inputs].apply(
+            lambda row: row.map(pr_mapping).prod(), axis=1
+        )
+
+        label_mapping = {key: values["label"] for key, values in values_map.items()}
+        results_df[inputs] = results_df[inputs].replace(label_mapping)
         self.sim_result = results_df
         return results_df
 
     def update_calculations(self):
+        labels_list = [details["label"] for details in values_map.values()]
         df = self.sim_result
-        kpi_cols = [f"{i}_{j}" for i in self.kpi_node_names for j in [0, 1, 2]]
+        kpi_cols = [f"{i}_{j}" for i in self.kpi_node_names for j in labels_list]
         calculations_df = pd.DataFrame(index=self.input_node_names, columns=kpi_cols)
         for kpi in self.kpi_node_names:
             for input in self.input_node_names:
-                for i in [0, 1, 2]:
+                for i in labels_list:
                     other_cols = [x for x in self.input_node_names if x != input]
-                    lookup = df[(df[input] == i) & ((df[other_cols] == 1).all(axis=1))]
+                    lookup = df[
+                        (df[input] == i) & ((df[other_cols] == "mid").all(axis=1))
+                    ]
                     calculations_df.loc[input, f"{kpi}_{i}"] = lookup[kpi].values[0]
 
         # calculate swings
@@ -83,15 +96,17 @@ class Funnel:
             calculations_df[f"{kpi}_swing_squared"] = calculations_df[
                 f"{kpi}_swing"
             ].apply(lambda x: x**2)
-            calculations_df.loc["Combined Uncertainty", f"{kpi}_0"] = df[kpi].quantile(
-                0.1, interpolation="nearest"
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_low"] = np.quantile(
+                df[kpi], 0.1, weights=df["weights"], method="inverted_cdf"
             )
-            calculations_df.loc["Combined Uncertainty", f"{kpi}_1"] = df[kpi].quantile(
-                0.5, interpolation="nearest"
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_mid"] = np.quantile(
+                df[kpi], 0.5, weights=df["weights"], method="inverted_cdf"
             )
-            calculations_df.loc["Combined Uncertainty", f"{kpi}_2"] = df[kpi].quantile(
-                0.9, interpolation="nearest"
+            calculations_df.loc["Combined Uncertainty", f"{kpi}_high"] = np.quantile(
+                df[kpi], 0.9, weights=df["weights"], method="inverted_cdf"
             )
-
+        calculations_df.rename(
+            index=self.nodes_collection.get_nodes_mapping(), inplace=True
+        )
         self.calculations_result = calculations_df
         return calculations_df

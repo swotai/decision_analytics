@@ -1,6 +1,12 @@
 import math
 import logging
 
+values_map = {
+    0: {"label": "low", "pr": 0.25, "represented_qtile": 0.1},
+    1: {"label": "mid", "pr": 0.5, "represented_qtile": 0.5},
+    2: {"label": "high", "pr": 0.25, "represented_qtile": 0.9},
+}
+
 
 def setup_logging(level=logging.WARNING):
     logging.basicConfig(level=level)
