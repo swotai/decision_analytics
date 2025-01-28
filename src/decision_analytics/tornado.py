@@ -9,30 +9,14 @@ actual_negative = b[f"{kpi}_low"].to_numpy()
 values_negative = actual_negative - midpoint
 y = b.index.tolist()
 
-# Determine range and intervals
-# Make this dynamic
-tick_increment = int((max(values_positive) - min(values_negative)) / 9)
-ticktext = list(
-    range(
-        int(min(actual_negative)),
-        int(max(actual_positive)),
-        tick_increment,
-    )
-)
-tickvals = list(
-    range(int(min(values_negative)), int(max(values_positive)), tick_increment)
-)
-
-
-# Flip ordering
-values_positive = values_positive[::-1]
-values_negative = values_negative[::-1]
-y = y[::-1]
+# Range and range text
+tickvals = [int(min(values_negative)), 0, int(max(values_positive))]
+ticktext = [int(min(actual_negative)), int(midpoint), int(max(actual_positive))]
 
 
 layout = go.Layout(
-    yaxis=go.layout.YAxis(title="Age"),
-    xaxis=dict(
+    yaxis=go.layout.YAxis(title="Inputs", categoryorder="array", categoryarray=y),
+    xaxis=go.layout.XAxis(
         title="Value",
         # Custom ticks based on midpoint
         tickvals=tickvals,
