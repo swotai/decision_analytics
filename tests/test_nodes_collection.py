@@ -1,6 +1,6 @@
 import pytest
-from decision_analytics.nodes_collection import NodesCollection
-from decision_analytics.node import Node
+
+from decision_analytics import NodesCollection
 
 
 def test_add_single_node():

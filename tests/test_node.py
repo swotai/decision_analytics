@@ -1,5 +1,6 @@
 import pytest
-from decision_analytics.node import Node
+
+from decision_analytics import Node
 
 
 def test_node_initialization():

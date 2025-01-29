@@ -1,6 +1,6 @@
 import pytest
-from decision_analytics.flow_charting import generate_funnel_chart_mermaid_code
-from decision_analytics.nodes_collection import NodesCollection
+
+from decision_analytics import NodesCollection, generate_funnel_chart_mermaid_code
 
 
 def test_generate_funnel_chart_mermaid_code():

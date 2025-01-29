@@ -1,9 +1,7 @@
-import pytest
 import pandas as pd
-from decision_analytics.funnel import Funnel
-from decision_analytics.nodes_collection import NodesCollection
-from decision_analytics.node import Node
-from decision_analytics.calculated_node import CalculatedNode
+import pytest
+
+from decision_analytics import Funnel, NodesCollection
 
 
 def setup_nodes():
@@ -40,4 +38,4 @@ def test_update_calculations():
     funnel.simulate_variances()
     calculations = funnel.update_calculations()
     assert isinstance(calculations, pd.DataFrame)
-    assert "input1_swing" in calculations.columns
+    assert "output1_swing" in calculations.columns

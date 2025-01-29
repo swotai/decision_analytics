@@ -1,5 +1,5 @@
 import pytest
-from decision_analytics.calculated_node import CalculatedNode
+from decision_analytics import CalculatedNode
 
 
 def test_calculated_node_initialization():
