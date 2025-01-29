@@ -59,7 +59,9 @@ class Node:
         self.name = name
         self.input_type = input_type
         self.readable_large_number = readable_large_number
-        self.long_name = name if long_name is None else long_name
+        self.long_name = (
+            name.replace("_", " ").title() if long_name is None else long_name
+        )
         self.description = description
         if is_kpi and input_type == "input":
             raise ValueError("KPIs cannot be input node.")
