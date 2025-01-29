@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from decision_analytics import NodesCollection
 import logging
+from decision_analytics.tornado import plot_tornado
 from decision_analytics.utils import values_map
 
 
@@ -16,6 +17,10 @@ class Funnel:
         self.sim_result = pd.DataFrame()
 
     def simulate(self) -> None:
+        """
+        Workflow to complete simulation, first simulating variance by each input's low/mid/high values.
+        Then updates calculations based on these simulated variances for all KPIs.
+        """
         self.simulate_variances()
         self.update_calculations()
 
@@ -26,7 +31,9 @@ class Funnel:
 
         Returns
         -------
-        None
+        pd.DataFrame
+            Result dataframe with all simulated scenarios (inputs x low/mid/high). Dataframe is kept
+            as instance property.
 
         Raises
         ------
@@ -71,7 +78,17 @@ class Funnel:
         self.sim_result = results_df
         return results_df
 
-    def update_calculations(self):
+    def update_calculations(self) -> pd.DataFrame:
+        """
+        Update variance calculations based on the current simulation results for all KPIs.
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe containing the summary table of each input's swing, swing squared,
+            variance percentage of total, and combined uncertainty.
+            Dataframe is stored as instance property.
+        """
         labels_list = [details["label"] for details in values_map.values()]
         df = self.sim_result
         kpi_cols = [f"{i}_{j}" for i in self.kpi_node_names for j in labels_list]
@@ -114,3 +131,15 @@ class Funnel:
         )
         self.calculations_result = calculations_df
         return calculations_df
+
+    def get_tornado_chart(self, kpi: str):
+        return plot_tornado(df=self.calculations_result, kpi=kpi)
+
+    def get_cdf_chart(self, kpi: str):
+        pass
+
+    def get_pdf_chart(self, kpi: str):
+        pass
+
+    def get_cumulative_chart(self, kpi: str):
+        pass
