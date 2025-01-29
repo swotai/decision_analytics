@@ -154,18 +154,19 @@ class NodesCollection:
         return {node.name: node.long_name for node in self.nodes.values()}
 
     def _check_valid_definitions(self):
-        """Make sure that the definition of the relationship is valid and is safe"""
-
-        allowed_operators = set("+-*/() _")
+        """Make sure that the definition of the relationship is valid and is safe."""
+        allowed_operators = set("+-*/() _0123456789")  # Allowing digits now
         for node in self.nodes.values():
             if isinstance(node, CalculatedNode):
                 # Extract all variable names from the definition
                 variables = re.findall(r"\b\w+\b", node.definition)
                 for var in variables:
-                    if var not in self.nodes:
+                    # Accept digit as valid
+                    if var not in self.nodes and not var.isdigit():
                         raise ValueError(
                             f"Variable '{var}' in node '{node.name}' is not a valid input node."
                         )
+
                 # Check for invalid characters in the definition
                 for char in node.definition:
                     if not char.isalnum() and char not in allowed_operators:
@@ -184,11 +185,11 @@ class NodesCollection:
             node for node in self.nodes.values() if isinstance(node, CalculatedNode)
         ]
 
-        # all input nodes get rank 0
+        # All input nodes get rank 0
         for node in input_nodes:
             node.rank = 0
 
-        # rank the calculated nodes
+        # Rank the calculated nodes
         rank = 1
         max_iterations = len(calculated_nodes)  # Prevent infinite loops
         iteration_count = 0
@@ -198,8 +199,9 @@ class NodesCollection:
             for node in calculated_nodes[:]:
                 variables = re.findall(r"\b\w+\b", node.definition)
                 # Check if all variables are resolved and ranked
+                # Allow constants in the definition
                 if all(
-                    var in self.nodes and self.nodes[var].rank < rank
+                    var.isdigit() or (var in self.nodes and self.nodes[var].rank < rank)
                     for var in variables
                 ):
                     node.rank = rank
@@ -233,28 +235,28 @@ class NodesCollection:
             if isinstance(node, CalculatedNode):
                 import ast
 
-                # Create a safe dictionary of variables
+                # Create a safe dictionary of variables, add `__builtins__` for constants
                 safe_dict = {
                     var: self.nodes[var].value
                     for var in re.findall(r"\b\w+\b", node.definition)
-                    if self.nodes[var].value is not None
+                    if var in self.nodes and self.nodes[var].value is not None
                 }
 
                 # Parse the definition into an AST node
                 node_ast = ast.parse(node.definition, mode="eval")
 
                 # Define a safe eval function
-                def safe_eval1(node_ast, safe_dict):
-                    code = compile(node_ast, "<string>", "eval")
-                    return eval(code, {"__builtins__": None}, safe_dict)
-
                 def safe_eval(node_ast, safe_dict):
                     try:
                         logging.debug(
                             f"Evaluating AST: {ast.dump(node_ast)} with safe_dict: {safe_dict}"
                         )
                         code = compile(node_ast, "<string>", "eval")
-                        result = eval(code, {"__builtins__": None}, safe_dict)
+                        result = eval(
+                            code,
+                            {"__builtins__": None},
+                            {**safe_dict, **{"__builtins__": None}},
+                        )
                         logging.debug(f"Result of evaluation: {result}")
                         return result
                     except Exception as e:
