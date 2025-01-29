@@ -2,7 +2,7 @@ import re
 from decision_analytics import NodesCollection
 
 
-def generate_funnel_chart_mermaid_code(nodes_collection: NodesCollection):
+def generate_funnel_chart_mermaid_code(nodes_collection: NodesCollection) -> str:
     """
     Generate mermaid code for a funnel chart
     """
