@@ -1,8 +1,11 @@
 import itertools
+import logging
+
 import numpy as np
 import pandas as pd
+
 from decision_analytics import NodesCollection
-import logging
+from decision_analytics.distributions import generate_cumulative_distribution_chart
 from decision_analytics.tornado import plot_tornado
 from decision_analytics.utils import values_map
 
@@ -142,4 +145,4 @@ class Funnel:
         pass
 
     def get_cumulative_chart(self, kpi: str):
-        pass
+        return generate_cumulative_distribution_chart(self.sim_result, kpi=kpi)
