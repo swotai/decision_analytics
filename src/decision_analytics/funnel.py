@@ -5,9 +5,14 @@ import numpy as np
 import pandas as pd
 
 from decision_analytics import NodesCollection
-from decision_analytics.distributions import generate_cumulative_distribution_chart
-from decision_analytics.tornado import plot_tornado
+from decision_analytics.plotting_utils import (
+    plot_tornado,
+    display_cdf_plot,
+    display_pdf_plot,
+    generate_cumulative_distribution_chart,
+)
 from decision_analytics.utils import values_map
+from decision_analytics.metalogistic import MetaLogistic
 
 
 class Funnel:
@@ -138,11 +143,23 @@ class Funnel:
     def get_tornado_chart(self, kpi: str):
         return plot_tornado(df=self.calculations_result, kpi=kpi)
 
-    def get_cdf_chart(self, kpi: str):
-        pass
+    def get_metalog(self, kpi: str):
+        calc_result = self.calculations_result.loc[
+            "Combined Uncertainty", [f"{kpi}_low", f"{kpi}_mid", f"{kpi}_high"]
+        ]
+        return MetaLogistic(cdf_xs=calc_result.tolist(), cdf_ps=[0.1, 0.5, 0.9])
 
-    def get_pdf_chart(self, kpi: str):
-        pass
+    def get_cdf_chart(self, report_kpi: str):
+        result_ml = self.get_metalog(report_kpi)
+        cdf_data = result_ml.create_cdf_plot_data(p_from_to=(0.001, 0.999), n=100)
+        report_kpi_label = self.nodes_collection.get_nodes_mapping()[report_kpi]
+        return display_cdf_plot(cdf_data, report_kpi_label)
+
+    def get_pdf_chart(self, report_kpi: str):
+        result_ml = self.get_metalog(report_kpi)
+        pdf_data = result_ml.create_pdf_plot_data(p_from_to=(0.001, 0.999), n=100)
+        report_kpi_label = self.nodes_collection.get_nodes_mapping()[report_kpi]
+        return display_pdf_plot(pdf_data, report_kpi_label)
 
     def get_cumulative_chart(self, kpi: str):
         return generate_cumulative_distribution_chart(self.sim_result, kpi=kpi)

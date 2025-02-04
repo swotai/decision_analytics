@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from decision_analytics.tornado import plot_tornado
+from decision_analytics.plotting_utils.tornado import plot_tornado
 import plotly.graph_objects as go
 
 
