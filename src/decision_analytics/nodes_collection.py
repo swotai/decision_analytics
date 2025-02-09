@@ -1,5 +1,6 @@
 import logging
 import re
+import json
 
 from decision_analytics import CalculatedNode, Node
 
@@ -22,6 +23,61 @@ class NodesCollection:
             f"NodesCollection with {len(self.nodes)} nodes: "
             f"{input_nodes_count} input nodes and {calculated_nodes_count} calculated nodes."
         )
+
+    def to_json(self) -> str:
+        """
+        Serializes all nodes in the collection to a JSON string.
+
+        Returns
+        -------
+        str
+            JSON string representation of all nodes
+        """
+        nodes_data = []
+        for node in self.nodes.values():
+            node_dict = {
+                "name": node.name,
+                "format_str": node.format_str,
+                "input_type": node.input_type,
+                "value_percentiles": node.value_percentiles,
+                "long_name": node.long_name,
+                "description": node.description,
+                "value": node.value,
+                "is_kpi": node.is_kpi,
+                "readable_large_number": node.readable_large_number,
+            }
+            if isinstance(node, CalculatedNode):
+                node_dict["definition"] = node.definition
+            nodes_data.append(node_dict)
+        return json.dumps(nodes_data, indent=2)
+
+    def from_json(self, json_str: str) -> None:
+        """
+        Sets up all nodes from a JSON string, overwriting any existing nodes.
+
+        Parameters
+        ----------
+        json_str : str
+            JSON string containing node definitions
+
+        Raises
+        ------
+        ValueError
+            If the JSON string is invalid or missing required node properties
+        """
+        try:
+            nodes_data = json.loads(json_str)
+            if not isinstance(nodes_data, list):
+                raise ValueError("JSON must contain a list of node definitions")
+
+            # Clear existing nodes
+            self.nodes = {}
+
+            # Add nodes from JSON
+            self.add_nodes(nodes_data)
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON string: {str(e)}")
 
     def add_nodes(self, nodes_list: list):
         """Add nodes
@@ -89,6 +145,11 @@ class NodesCollection:
                 if lookup:
                     # Only do lookup if value_percentile exists. Otherwise don't update the value
                     if node.value_percentiles:
+                        # Ensure value is an integer index for the percentiles tuple
+                        if not isinstance(value, int) or value not in [0, 1, 2]:
+                            raise ValueError(
+                                f"When using lookup, value must be 0, 1, or 2 for 10th, 50th, or 90th percentile. Got {value}"
+                            )
                         v = node.value_percentiles[value]
                     else:
                         v = node.value
