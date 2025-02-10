@@ -1,12 +1,12 @@
 [project]
 name = "decision_analytics"
-version = "0.1.0"
+version = "0.1.2"
 description = "Decision Analysis Library for Python, allowing for the creation of decision funnel diagrams and tornado diagrams."
 authors = [{ name = "Dennis Tai", email = "swotai@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pandas", "plotly", "nbformat"]
+dependencies = ["pandas", "plotly", "nbformat", "streamlit"]
 
 [project.optional-dependencies]
 dev = ["pytest", "mkdocs", "mkdocstrings"]

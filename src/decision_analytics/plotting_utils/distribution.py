@@ -15,7 +15,7 @@ def generate_cumulative_distribution_chart(data: pd.DataFrame, kpi: str) -> go.F
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=kpi_values, y=cumulative_pr, mode="lines+markers"))
     fig.update_layout(
-        title="KPI vs Cumulative Weights",
+        title=f"KPI ({kpi}) vs Cumulative Weights",
         xaxis_title="KPI (Total Sales)",
         yaxis_title="Cumulative Weights",
         height=600,
