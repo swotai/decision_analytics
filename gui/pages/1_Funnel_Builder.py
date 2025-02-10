@@ -1,7 +1,13 @@
-import streamlit as st
-import pandas as pd
 import ast
-from decision_analytics import Node, CalculatedNode, Funnel
+
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
+
+from decision_analytics import Funnel
+from decision_analytics.plotting_utils.flowchart import (
+    generate_funnel_chart_mermaid_code,
+)
 
 
 def update_nodes_from_dataframe(edited_df, node_type="input"):
@@ -136,35 +142,76 @@ with left_col:
 
 with right_col:
     st.subheader("Flowchart")
-    # Generate mermaid chart
-    mermaid_code = "graph TD\n"
+    mermaid_code = generate_funnel_chart_mermaid_code(st.session_state.nodes_collection)
+    components.html(
+        f"""<pre class="mermaid">{mermaid_code}</pre>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({{ startOnLoad: true }});
+    </script>
+        """,
+        height=600,
+        scrolling=True,
+    )
 
-    # Add all nodes first
-    for node in st.session_state.nodes_collection:
-        node_style = "default"
-        if isinstance(node, CalculatedNode):
-            node_style = "rounded"
-        if node.is_kpi:
-            node_style = "stadium"
-        mermaid_code += f"    {node.name}[{node.name}]:::{node_style}\n"
 
-    # Add relationships for calculated nodes
-    for node in st.session_state.nodes_collection:
-        if isinstance(node, CalculatedNode):
-            # Extract dependencies from definition using regex to handle operators
-            import re
+# Get KPI nodes
+kpi_nodes = st.session_state.nodes_collection.get_kpi_nodes()
+if kpi_nodes:
+    # Create a row with two columns for KPI selection and refresh button
+    kpi_col, refresh_col = st.columns([0.7, 0.3], vertical_alignment="bottom")
 
-            deps = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", node.definition)
-            for dep in deps:
-                if dep in st.session_state.nodes_collection.nodes:
-                    mermaid_code += f"    {dep} --> {node.name}\n"
+    with kpi_col:
+        # Create a selectbox for KPI selection
+        selected_kpi = st.selectbox(
+            "Select KPI to display",
+            options=[node.name for node in kpi_nodes],
+            format_func=lambda x: st.session_state.nodes_collection.get_node(
+                x
+            ).long_name,
+        )
 
-    # Add style definitions
-    mermaid_code += """
-    classDef default fill:#ddd,stroke:#000,stroke-width:1px;
-    classDef rounded fill:#bbf,stroke:#000,stroke-width:1px,rx:10px,ry:10px;
-    classDef stadium fill:#bfb,stroke:#000,stroke-width:1px,rx:20px,ry:20px;
-    """
+    with refresh_col:
+        # Add refresh button
+        if st.button("Refresh Calculation"):
+            # Update the funnel calculations
+            st.session_state.funnel.simulate()
 
-    # Display mermaid chart
-    st.markdown(f"```mermaid\n{mermaid_code}\n```")
+    # Split the page into two columns
+    left_col, right_col = st.columns([0.5, 0.5])
+    with left_col:
+        # Get and display tornado chart
+        try:
+            tornado_fig = st.session_state.funnel.get_tornado_chart(selected_kpi)
+            st.plotly_chart(tornado_fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating tornado chart: {str(e)}")
+
+    with right_col:
+        # Display cumulative chart
+        try:
+            cumulative_fig = st.session_state.funnel.get_cumulative_chart(selected_kpi)
+            st.plotly_chart(cumulative_fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating cumulative chart: {str(e)}")
+
+    left_col, right_col = st.columns([0.5, 0.5])
+    with left_col:
+        # Display cdf chart
+        try:
+            cdf_fig = st.session_state.funnel.get_cdf_chart(selected_kpi)
+            st.plotly_chart(cdf_fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating cdf chart: {str(e)}")
+    with right_col:
+        # display pdf chart
+        try:
+            pdf_fig = st.session_state.funnel.get_pdf_chart(selected_kpi)
+            st.plotly_chart(pdf_fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating pdf chart: {str(e)}")
+
+else:
+    st.warning(
+        "No KPI nodes found in the collection. Please add KPI nodes in the Funnel Builder."
+    )
