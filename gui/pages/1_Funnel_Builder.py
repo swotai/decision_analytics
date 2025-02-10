@@ -10,6 +10,17 @@ from decision_analytics.plotting_utils.flowchart import (
 )
 
 
+def sync_nodes_with_state(nodes_df: pd.DataFrame):
+    # Remove nodes no longer in the dataframe
+    current_node_names = set(st.session_state.nodes_collection.nodes.keys())
+    df_node_names = set(nodes_df["Name"])
+
+    nodes_to_remove = current_node_names - df_node_names
+    for node_name in nodes_to_remove:
+        # logging.debug(f"Removing node {node_name} from nodes collection")
+        st.session_state.nodes_collection.remove_node(node_name)
+
+
 def update_nodes_from_dataframe(edited_df, node_type="input"):
     """Update nodes collection from edited dataframe"""
     try:
@@ -96,10 +107,6 @@ with left_col:
         )
         # Update the session state edited dataframe
         st.session_state.edited_input_df = edited_input_df
-
-        # Add Refresh Data button
-        if st.button("Refresh Input Data", key="refresh_input_data"):
-            update_nodes_from_dataframe(st.session_state.edited_input_df, "input")
     else:
         st.info("No input nodes available")
 
@@ -144,24 +151,25 @@ with left_col:
         )
         # Update the session state edited dataframe
         st.session_state.edited_calc_df = edited_calc_df
-
-        # Add Refresh Data button
-        if st.button("Refresh Calculated Data", key="refresh_calculated_data"):
-            update_nodes_from_dataframe(st.session_state.edited_calc_df, "calculation")
     else:
         st.info("No calculated nodes available")
 
-    # Update nodes collection if input table was edited
-    # if (
-    #     input_nodes
-    #     and edited_input_df is not None
-    #     and not edited_input_df.equals(input_df)
-    # ):
-    #     update_nodes_from_dataframe(edited_input_df, "input")
+    # Single refresh button for both tables
+    if st.button("Refresh All Data", key="refresh_all"):
+        current_editor_nodes = pd.concat(
+            [
+                st.session_state.edited_input_df[["Name"]],
+                st.session_state.edited_calc_df[["Name"]],
+            ]
+        )
+        sync_nodes_with_state(current_editor_nodes)
+        if input_nodes:
+            update_nodes_from_dataframe(st.session_state.edited_input_df, "input")
+        if calc_nodes:
+            update_nodes_from_dataframe(st.session_state.edited_calc_df, "calculation")
 
-    # Update nodes collection if calculated table was edited
-    # if calc_nodes and edited_calc_df is not None and not edited_calc_df.equals(calc_df):
-    #     update_nodes_from_dataframe(edited_calc_df, "calculation")
+    # Adding row works, but deleting doesn't.
+
 
 with right_col:
     st.subheader("Flowchart")

@@ -100,6 +100,7 @@ class NodesCollection:
         """
         Remove a node from the collection.
         """
+        logging.debug(f"Removing node: {node_name}")
         del self.nodes[node_name]
 
     def set_node_values_from_dict(self, values_dict: dict, lookup: bool = True) -> None:
