@@ -35,7 +35,6 @@ def update_nodes_from_dataframe(edited_df, node_type="input"):
                 node_data["value"] = row["Value"] if pd.notna(row["Value"]) else None
             else:
                 node_data["definition"] = row["Definition"]
-                node_data["value"] = None
 
             # Update or add node to collection
             st.session_state.nodes_collection.add_nodes([node_data])
@@ -79,13 +78,15 @@ with left_col:
             num_rows="dynamic",
             column_config={
                 "Name": st.column_config.TextColumn("Name", required=True),
-                "Long Name": st.column_config.TextColumn("Long Name", required=True),
+                "Long Name": st.column_config.TextColumn("Long Name"),
                 "Description": st.column_config.TextColumn("Description"),
                 "Value": st.column_config.NumberColumn("Value"),
                 "Value Percentiles": st.column_config.TextColumn("Value Percentiles"),
                 "Format": st.column_config.TextColumn("Format"),
-                "Is KPI": st.column_config.CheckboxColumn("Is KPI"),
-                "Input Type": st.column_config.TextColumn("Input Type"),
+                "Is KPI": st.column_config.CheckboxColumn(
+                    "Is KPI", default=False, disabled=True
+                ),
+                "Input Type": st.column_config.TextColumn("Input Type", required=True),
             },
         )
     else:
@@ -116,13 +117,13 @@ with left_col:
             num_rows="dynamic",
             column_config={
                 "Name": st.column_config.TextColumn("Name", required=True),
-                "Long Name": st.column_config.TextColumn("Long Name", required=True),
+                "Long Name": st.column_config.TextColumn("Long Name"),
                 "Description": st.column_config.TextColumn("Description"),
                 "Definition": st.column_config.TextColumn("Definition", required=True),
                 "Value": st.column_config.NumberColumn("Value", disabled=True),
                 "Format": st.column_config.TextColumn("Format"),
                 "Is KPI": st.column_config.CheckboxColumn("Is KPI"),
-                "Input Type": st.column_config.TextColumn("Input Type"),
+                "Input Type": st.column_config.TextColumn("Input Type", required=True),
             },
         )
     else:
@@ -210,7 +211,10 @@ if kpi_nodes:
             st.plotly_chart(pdf_fig, use_container_width=True)
         except Exception as e:
             st.error(f"Error generating pdf chart: {str(e)}")
-
+    pr = st.session_state.funnel.get_kpi_negative_probability(selected_kpi)
+    st.text(
+        f"There is a {pr*100:.3g}% chance that the KPI {selected_kpi} will be negative"
+    )
 else:
     st.warning(
         "No KPI nodes found in the collection. Please add KPI nodes in the Funnel Builder."

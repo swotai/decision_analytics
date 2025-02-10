@@ -60,7 +60,9 @@ class Node:
         self.input_type = input_type
         self.readable_large_number = readable_large_number
         self.long_name = (
-            name.replace("_", " ").title() if long_name is None else long_name
+            name.replace("_", " ").title()
+            if long_name is None or long_name == ""
+            else long_name
         )
         self.description = description
         if is_kpi and input_type == "input":
@@ -69,7 +71,11 @@ class Node:
 
         # value and distribution attributes
         self.value = value
-        self.format_str = format_str
+        if format_str:
+            self.format_str = format_str
+        else:
+            # default 2 decimal places
+            self.format_str = ".2f"
         if value_percentiles is not None and len(value_percentiles) != 3:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"

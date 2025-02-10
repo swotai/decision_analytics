@@ -158,34 +158,34 @@ class Funnel:
         result_ml = self.get_metalog(report_kpi)
         cdf_data = result_ml.create_cdf_plot_data(p_from_to=(0.001, 0.999), n=100)
         report_kpi_label = self.nodes_collection.get_nodes_mapping()[report_kpi]
+
         # Calculate percentiles and mean
         percentiles = {
-            "10th Percentile": result_ml.quantile(0.1),
-            "50th Percentile (Median)": result_ml.quantile(0.5),
-            "90th Percentile": result_ml.quantile(0.9),
+            "10th p_tile": result_ml.quantile(0.1),
+            "50th p_tile (Median)": result_ml.quantile(0.5),
+            "90th p_tile": result_ml.quantile(0.9),
             "Mean": result_ml.mean(),
         }
-
+        colors = {
+            "10th p_tile": "red",
+            "50th p_tile (Median)": "green",
+            "90th p_tile": "blue",
+            "Mean": "purple",
+        }
         # Create the CDF plot
         fig = display_cdf_plot(cdf_data, report_kpi_label)
 
         # Add vertical reference lines for percentiles
         for label, value in percentiles.items():
-            fig.add_shape(
-                type="line",
-                x0=value,
-                y0=0,
-                x1=value,
-                y1=1,
-                line=dict(color="red", width=2, dash="dash"),
-            )
-            # Add annotations for the reference lines
-            fig.add_annotation(
+            fig.add_vline(
                 x=value,
-                y=0,
-                text=f"{label}: {value:.2f}",
-                showarrow=True,
-                arrowhead=1,
+                line_width=3,
+                line_dash="dash",
+                line_color=colors.get(label, "gray"),
+                name=label,
+                # annotation_text="Reference",
+                # annotation_position="top right",
+                showlegend=True,
             )
 
         return fig
@@ -194,7 +194,42 @@ class Funnel:
         result_ml = self.get_metalog(report_kpi)
         pdf_data = result_ml.create_pdf_plot_data(p_from_to=(0.001, 0.999), n=100)
         report_kpi_label = self.nodes_collection.get_nodes_mapping()[report_kpi]
-        return display_pdf_plot(pdf_data, report_kpi_label)
+
+        # Calculate percentiles and mean
+        percentiles = {
+            "10th p_tile": result_ml.quantile(0.1),
+            "50th p_tile (Median)": result_ml.quantile(0.5),
+            "90th p_tile": result_ml.quantile(0.9),
+            "Mean": result_ml.mean(),
+        }
+        colors = {
+            "10th p_tile": "red",
+            "50th p_tile (Median)": "green",
+            "90th p_tile": "blue",
+            "Mean": "purple",
+        }
+        # Create the CDF plot
+        fig = display_pdf_plot(pdf_data, report_kpi_label)
+
+        # Add vertical reference lines for percentiles
+        for label, value in percentiles.items():
+            fig.add_vline(
+                x=value,
+                line_width=3,
+                line_dash="dash",
+                line_color=colors.get(label, "gray"),
+                name=label,
+                # annotation_text="Reference",
+                # annotation_position="top right",
+                showlegend=True,
+            )
+
+        return fig
+
+    def get_kpi_negative_probability(self, report_kpi: str) -> float:
+        result_ml = self.get_metalog(report_kpi)
+        pr = result_ml.cdf(0)
+        return float(pr)
 
     def get_cumulative_chart(self, kpi: str):
         return generate_cumulative_distribution_chart(self.sim_result, kpi=kpi)
