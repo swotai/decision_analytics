@@ -84,6 +84,8 @@ class Funnel:
         label_mapping = {key: values["label"] for key, values in values_map.items()}
         results_df[inputs] = results_df[inputs].replace(label_mapping)
         self.sim_result = results_df
+        # Reset all input nodes to median value
+        self.nodes_collection.reset_input_nodes()
         return results_df
 
     def update_calculations(self) -> pd.DataFrame:
@@ -141,7 +143,10 @@ class Funnel:
         return calculations_df
 
     def get_tornado_chart(self, kpi: str):
-        return plot_tornado(df=self.calculations_result, kpi=kpi)
+        df = self.calculations_result.sort_values(
+            by=f"{kpi}_swing_squared", na_position="first"
+        )
+        return plot_tornado(df=df, kpi=kpi)
 
     def get_metalog(self, kpi: str):
         calc_result = self.calculations_result.loc[

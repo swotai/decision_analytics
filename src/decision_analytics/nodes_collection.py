@@ -49,7 +49,7 @@ class NodesCollection:
             if isinstance(node, CalculatedNode):
                 node_dict["definition"] = node.definition
             nodes_data.append(node_dict)
-        return json.dumps(nodes_data, indent=2)
+        return json.dumps(nodes_data)
 
     def from_json(self, json_str: str) -> None:
         """
@@ -326,3 +326,32 @@ class NodesCollection:
 
                 # Evaluate the node definition safely
                 node.update_value(safe_eval(node_ast, safe_dict))
+
+    def reset_input_nodes(self):
+        # STILL DOESN"T WORK
+        """
+        Reset all input nodes to their median value.
+
+        If value_percentiles is available, use the 50th percentile (median).
+        If no percentiles are defined, set value to None.
+        """
+        for node in self.nodes.values():
+            # Check if the node is an input node
+            if node.input_type is not None:
+                # If value percentiles are defined, use the median (50th percentile)
+                if hasattr(node, "value_percentiles") and node.value_percentiles:
+                    try:
+                        # Assuming value_percentiles is a tuple of (min, max, percentiles)
+                        # and percentiles is a list/tuple of values
+                        median_index = len(node.value_percentiles) // 2
+                        node.value = node.value_percentiles[median_index]
+                    except (IndexError, TypeError):
+                        # If percentiles can't be processed, set to None
+                        node.value = None
+                else:
+                    # If no percentiles, don't update (this might be a constant node)
+                    # node.value = None
+                    pass
+
+        # Refresh nodes after resetting
+        self.refresh_nodes()
