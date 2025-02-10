@@ -72,8 +72,12 @@ with left_col:
                 for node in input_nodes
             ]
         )
+        # Store the edited dataframe in session state
+        if "edited_input_df" not in st.session_state:
+            st.session_state.edited_input_df = input_df.copy()
+
         edited_input_df = st.data_editor(
-            input_df,
+            st.session_state.edited_input_df,
             use_container_width=True,
             num_rows="dynamic",
             column_config={
@@ -88,7 +92,14 @@ with left_col:
                 ),
                 "Input Type": st.column_config.TextColumn("Input Type", required=True),
             },
+            key="input_nodes_editor",
         )
+        # Update the session state edited dataframe
+        st.session_state.edited_input_df = edited_input_df
+
+        # Add Refresh Data button
+        if st.button("Refresh Input Data", key="refresh_input_data"):
+            update_nodes_from_dataframe(st.session_state.edited_input_df, "input")
     else:
         st.info("No input nodes available")
 
@@ -111,8 +122,12 @@ with left_col:
                 for node in calc_nodes
             ]
         )
+        # Store the edited dataframe in session state
+        if "edited_calc_df" not in st.session_state:
+            st.session_state.edited_calc_df = calc_df.copy()
+
         edited_calc_df = st.data_editor(
-            calc_df,
+            st.session_state.edited_calc_df,
             use_container_width=True,
             num_rows="dynamic",
             column_config={
@@ -125,21 +140,28 @@ with left_col:
                 "Is KPI": st.column_config.CheckboxColumn("Is KPI"),
                 "Input Type": st.column_config.TextColumn("Input Type", required=True),
             },
+            key="calc_nodes_editor",
         )
+        # Update the session state edited dataframe
+        st.session_state.edited_calc_df = edited_calc_df
+
+        # Add Refresh Data button
+        if st.button("Refresh Calculated Data", key="refresh_calculated_data"):
+            update_nodes_from_dataframe(st.session_state.edited_calc_df, "calculation")
     else:
         st.info("No calculated nodes available")
 
     # Update nodes collection if input table was edited
-    if (
-        input_nodes
-        and edited_input_df is not None
-        and not edited_input_df.equals(input_df)
-    ):
-        update_nodes_from_dataframe(edited_input_df, "input")
+    # if (
+    #     input_nodes
+    #     and edited_input_df is not None
+    #     and not edited_input_df.equals(input_df)
+    # ):
+    #     update_nodes_from_dataframe(edited_input_df, "input")
 
     # Update nodes collection if calculated table was edited
-    if calc_nodes and edited_calc_df is not None and not edited_calc_df.equals(calc_df):
-        update_nodes_from_dataframe(edited_calc_df, "calculation")
+    # if calc_nodes and edited_calc_df is not None and not edited_calc_df.equals(calc_df):
+    #     update_nodes_from_dataframe(edited_calc_df, "calculation")
 
 with right_col:
     st.subheader("Flowchart")
