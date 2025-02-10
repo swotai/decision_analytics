@@ -158,7 +158,37 @@ class Funnel:
         result_ml = self.get_metalog(report_kpi)
         cdf_data = result_ml.create_cdf_plot_data(p_from_to=(0.001, 0.999), n=100)
         report_kpi_label = self.nodes_collection.get_nodes_mapping()[report_kpi]
-        return display_cdf_plot(cdf_data, report_kpi_label)
+        # Calculate percentiles and mean
+        percentiles = {
+            "10th Percentile": result_ml.quantile(0.1),
+            "50th Percentile (Median)": result_ml.quantile(0.5),
+            "90th Percentile": result_ml.quantile(0.9),
+            "Mean": result_ml.mean(),
+        }
+
+        # Create the CDF plot
+        fig = display_cdf_plot(cdf_data, report_kpi_label)
+
+        # Add vertical reference lines for percentiles
+        for label, value in percentiles.items():
+            fig.add_shape(
+                type="line",
+                x0=value,
+                y0=0,
+                x1=value,
+                y1=1,
+                line=dict(color="red", width=2, dash="dash"),
+            )
+            # Add annotations for the reference lines
+            fig.add_annotation(
+                x=value,
+                y=0,
+                text=f"{label}: {value:.2f}",
+                showarrow=True,
+                arrowhead=1,
+            )
+
+        return fig
 
     def get_pdf_chart(self, report_kpi: str):
         result_ml = self.get_metalog(report_kpi)
