@@ -159,7 +159,7 @@ with right_col:
 kpi_nodes = st.session_state.nodes_collection.get_kpi_nodes()
 if kpi_nodes:
     # Create a row with two columns for KPI selection and refresh button
-    kpi_col, refresh_col = st.columns([0.7, 0.3], vertical_alignment="bottom")
+    kpi_col, refresh_col = st.columns([0.2, 0.8], vertical_alignment="bottom")
 
     with kpi_col:
         # Create a selectbox for KPI selection
@@ -171,11 +171,11 @@ if kpi_nodes:
             ).long_name,
         )
 
-    with refresh_col:
-        # Add refresh button
-        if st.button("Refresh Calculation"):
-            # Update the funnel calculations
-            st.session_state.funnel.simulate()
+    # with refresh_col:
+    #     # Add refresh button
+    #     if st.button("Refresh Calculation"):
+    #         # Update the funnel calculations
+    #         st.session_state.funnel.simulate()
 
     # Split the page into two columns
     left_col, right_col = st.columns([0.5, 0.5])
