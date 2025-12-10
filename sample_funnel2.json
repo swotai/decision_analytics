@@ -1,0 +1,122 @@
+[
+    {
+        "name": "total_users",
+        "format_str": ".0f",
+        "input_type": "input",
+        "value_percentiles": [
+            1000.0,
+            5000.0,
+            9000.0
+        ],
+        "long_name": "Total Users",
+        "description": null,
+        "value": 5000.0,
+        "is_kpi": false,
+        "readable_large_number": true
+    },
+    {
+        "name": "subscribe_rate",
+        "format_str": ".2%",
+        "input_type": "input",
+        "value_percentiles": [
+            0.45,
+            0.5,
+            0.6
+        ],
+        "long_name": "Subscribe Rate",
+        "description": null,
+        "value": 0.5,
+        "is_kpi": false,
+        "readable_large_number": true
+    },
+    {
+        "name": "ctr",
+        "format_str": ".2%",
+        "input_type": "input",
+        "value_percentiles": [
+            0.08,
+            0.1,
+            0.11
+        ],
+        "long_name": "Click-Through Rate",
+        "description": null,
+        "value": 0.1,
+        "is_kpi": false,
+        "readable_large_number": true
+    },
+    {
+        "name": "sale_success_rate",
+        "format_str": ".2%",
+        "input_type": "input",
+        "value_percentiles": [
+            0.1,
+            0.3,
+            0.5
+        ],
+        "long_name": "Sale Success Rate",
+        "description": null,
+        "value": 0.3,
+        "is_kpi": false,
+        "readable_large_number": true
+    },
+    {
+        "name": "total_subscribers",
+        "format_str": ".2f",
+        "input_type": "calculation",
+        "value_percentiles": null,
+        "long_name": "Total Subscribers",
+        "description": null,
+        "value": 2500.0,
+        "is_kpi": false,
+        "readable_large_number": true,
+        "definition": "total_users * subscribe_rate"
+    },
+    {
+        "name": "total_clicks",
+        "format_str": ".2f",
+        "input_type": "calculation",
+        "value_percentiles": null,
+        "long_name": "Total Clicks",
+        "description": null,
+        "value": 250.0,
+        "is_kpi": false,
+        "readable_large_number": true,
+        "definition": "total_subscribers * ctr"
+    },
+    {
+        "name": "total_sales",
+        "format_str": ".2f",
+        "input_type": "calculation",
+        "value_percentiles": null,
+        "long_name": "Total Sales",
+        "description": null,
+        "value": 75.0,
+        "is_kpi": true,
+        "readable_large_number": true,
+        "definition": "total_clicks * sale_success_rate"
+    },
+    {
+        "name": "total_missed_revenue",
+        "format_str": ".2f",
+        "input_type": "calculation",
+        "value_percentiles": null,
+        "long_name": "Total Missed Revenue",
+        "description": null,
+        "value": 175.0,
+        "is_kpi": true,
+        "readable_large_number": true,
+        "definition": "total_clicks * (1-sale_success_rate)"
+    },
+    {
+        "name": "total_revenue",
+        "format_str": ".2f",
+        "input_type": "calculation",
+        "value_percentiles": null,
+        "long_name": "Total Revenue",
+        "description": null,
+        "value": 1500.0,
+        "is_kpi": true,
+        "readable_large_number": true,
+        "definition": "total_sales * 20"
+    }
+]

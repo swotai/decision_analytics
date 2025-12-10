@@ -6,7 +6,14 @@ authors = [{ name = "Dennis Tai", email = "swotai@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pandas", "plotly", "nbformat", "streamlit"]
+dependencies = [
+    "pandas",
+    "plotly",
+    "nbformat",
+    "streamlit",
+    "scipy",
+    "matplotlib",
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "mkdocs", "mkdocstrings"]
