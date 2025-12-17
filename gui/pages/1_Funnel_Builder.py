@@ -89,7 +89,7 @@ with left_col:
 
         edited_input_df = st.data_editor(
             st.session_state.edited_input_df,
-            use_container_width=True,
+            width="stretch",
             num_rows="dynamic",
             column_config={
                 "Name": st.column_config.TextColumn("Name", required=True),
@@ -135,7 +135,7 @@ with left_col:
 
         edited_calc_df = st.data_editor(
             st.session_state.edited_calc_df,
-            use_container_width=True,
+            width="stretch",
             num_rows="dynamic",
             column_config={
                 "Name": st.column_config.TextColumn("Name", required=True),
@@ -214,7 +214,7 @@ if kpi_nodes:
         # Get and display tornado chart
         try:
             tornado_fig = st.session_state.funnel.get_tornado_chart(selected_kpi)
-            st.plotly_chart(tornado_fig, use_container_width=True)
+            st.plotly_chart(tornado_fig, width="stretch")
         except Exception as e:
             st.error(f"Error generating tornado chart: {str(e)}")
 
@@ -222,7 +222,7 @@ if kpi_nodes:
         # Display cumulative chart
         try:
             cumulative_fig = st.session_state.funnel.get_cumulative_chart(selected_kpi)
-            st.plotly_chart(cumulative_fig, use_container_width=True)
+            st.plotly_chart(cumulative_fig, width="stretch")
         except Exception as e:
             st.error(f"Error generating cumulative chart: {str(e)}")
 
@@ -231,14 +231,14 @@ if kpi_nodes:
         # Display cdf chart
         try:
             cdf_fig = st.session_state.funnel.get_cdf_chart(selected_kpi)
-            st.plotly_chart(cdf_fig, use_container_width=True)
+            st.plotly_chart(cdf_fig, width="stretch")
         except Exception as e:
             st.error(f"Error generating cdf chart: {str(e)}")
     with right_col:
         # display pdf chart
         try:
             pdf_fig = st.session_state.funnel.get_pdf_chart(selected_kpi)
-            st.plotly_chart(pdf_fig, use_container_width=True)
+            st.plotly_chart(pdf_fig, width="stretch")
         except Exception as e:
             st.error(f"Error generating pdf chart: {str(e)}")
     pr = st.session_state.funnel.get_kpi_negative_probability(selected_kpi)
