@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "mkdocs", "mkdocstrings"]
+dev = ["pytest", "pytest-cov", "coverage", "mkdocs", "mkdocstrings"]
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]

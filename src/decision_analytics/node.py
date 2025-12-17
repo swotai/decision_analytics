@@ -76,6 +76,8 @@ class Node:
         else:
             # default 2 decimal places
             self.format_str = ".2f"
+        if value_percentiles == ():
+            value_percentiles = None
         if value_percentiles is not None and len(value_percentiles) != 3:
             raise ValueError(
                 "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"

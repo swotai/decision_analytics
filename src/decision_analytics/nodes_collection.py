@@ -166,6 +166,47 @@ class NodesCollection:
                     f"Node '{node_name}' does not have a 'value' attribute."
                 )
 
+    def set_node_percentiles_from_dict(self, percentiles_dict: dict) -> None:
+        """
+        Set the value_percentiles of nodes from a dictionary.
+
+        Parameters
+        ----------
+        percentiles_dict : dict
+            Dictionary, with the input node name as key, and the desired 3-value tuple as value.
+
+        Raises
+        ------
+        ValueError
+            If node does not exist.
+        ValueError
+            If the value provided is not a tuple of length 3.
+        ValueError
+            If any item in the tuple is not a number (int/float).
+        """
+        for node_name, percentiles in percentiles_dict.items():
+            try:
+                node = self.get_node(node_name)
+                if node is None:
+                    raise ValueError(f"Node '{node_name}' does not exist.")
+                if not isinstance(percentiles, tuple) or len(percentiles) != 3:
+                    raise ValueError(
+                        f"Percentiles must be a tuple of length 3 for node '{node_name}'."
+                    )
+                if not all(isinstance(p, (int, float)) for p in percentiles):
+                    raise ValueError(
+                        f"All percentile values must be numbers for node '{node_name}'."
+                    )
+                node.value_percentiles = percentiles
+            except KeyError:
+                raise ValueError(
+                    f"Percentiles '{percentiles}' is not a valid percentile for node '{node_name}'."
+                )
+            except AttributeError:
+                raise ValueError(
+                    f"Node '{node_name}' does not have a 'value_percentiles' attribute."
+                )
+
     def get_node(self, name: str) -> Node:
         """
         Get a node by its name.
@@ -204,12 +245,14 @@ class NodesCollection:
         return [node for node in self.nodes.values() if node.is_kpi]
 
     def get_unused_nodes(self) -> list:
-        """Get a list of nodes that is not included in any calculated node definitions"""
-        used_nodes = set()
+        """Get a list of input nodes that are not included in any calculated node definitions"""
+        used_node_names = set()
         for node in self.nodes.values():
             if isinstance(node, CalculatedNode):
-                used_nodes.update(re.findall(r"\b\w+\b", node.definition))
-        return [node for node in self.nodes.values() if node.name not in used_nodes]
+                used_node_names.update(re.findall(r"\b\w+\b", node.definition))
+        return [
+            node for node in self.get_input_nodes() if node.name not in used_node_names
+        ]
 
     def get_nodes_mapping(self) -> dict:
         """Get a dict where each key is each node's name and value is its corresponding long name"""
@@ -329,7 +372,7 @@ class NodesCollection:
                 node.update_value(safe_eval(node_ast, safe_dict))
 
     def reset_input_nodes(self):
-        # STILL DOESN"T WORK
+        # STILL DOESN'T WORK
         """
         Reset all input nodes to their median value.
 
@@ -339,8 +382,12 @@ class NodesCollection:
         for node in self.nodes.values():
             # Check if the node is an input node
             if node.input_type is not None:
-                # If value percentiles are defined, use the median (50th percentile)
-                if hasattr(node, "value_percentiles") and node.value_percentiles:
+                # If value percentiles are defined and is a 3 element tuple, use the median (50th percentile)
+                if (
+                    hasattr(node, "value_percentiles")
+                    and node.value_percentiles
+                    and len(node.value_percentiles) == 3
+                ):
                     try:
                         # Assuming value_percentiles is a tuple of (min, max, percentiles)
                         # and percentiles is a list/tuple of values

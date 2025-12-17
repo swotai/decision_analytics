@@ -66,7 +66,7 @@
         "value_percentiles": null,
         "long_name": "Total Subscribers",
         "description": null,
-        "value": 2500.0,
+        "value": 1.0,
         "is_kpi": false,
         "readable_large_number": true,
         "definition": "total_users * subscribe_rate"
@@ -78,7 +78,7 @@
         "value_percentiles": null,
         "long_name": "Total Clicks",
         "description": null,
-        "value": 250.0,
+        "value": 1.0,
         "is_kpi": false,
         "readable_large_number": true,
         "definition": "total_subscribers * ctr"
@@ -90,7 +90,7 @@
         "value_percentiles": null,
         "long_name": "Total Sales",
         "description": null,
-        "value": 75.0,
+        "value": 1.0,
         "is_kpi": true,
         "readable_large_number": true,
         "definition": "total_clicks * sale_success_rate"
@@ -102,7 +102,7 @@
         "value_percentiles": null,
         "long_name": "Total Missed Revenue",
         "description": null,
-        "value": 175.0,
+        "value": 1.0,
         "is_kpi": true,
         "readable_large_number": true,
         "definition": "total_clicks * (1-sale_success_rate)"
@@ -114,7 +114,7 @@
         "value_percentiles": null,
         "long_name": "Total Revenue",
         "description": null,
-        "value": 1500.0,
+        "value": 1.0,
         "is_kpi": true,
         "readable_large_number": true,
         "definition": "total_sales * 20"
