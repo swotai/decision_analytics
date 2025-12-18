@@ -62,11 +62,12 @@ class Funnel:
 
         results = []
         for combo in all_combinations:
+            input_labels = [f"{l}_value" for l in inputs]
             combo_dict = dict(zip(inputs, combo))
             self.nodes_collection.set_node_values_from_dict(combo_dict)
             # rebuild combo_dict for logging, extract the values from actual inputs
             values = [self.nodes_collection.get_node(i).value for i in inputs]
-            combo_dict_output = dict(zip(inputs, values))
+            combo_dict_output = dict(zip(input_labels, values))
             logging.debug(combo_dict)
             logging.debug(self.nodes_collection.get_input_nodes())
             self.nodes_collection.refresh_nodes()
@@ -75,6 +76,7 @@ class Funnel:
                 {
                     **combo_dict_output,
                     **{k: v for k, v in zip(kpis, kpi_values)},
+                    **combo_dict,
                 }
             )
         results_df = pd.DataFrame(results)
@@ -84,8 +86,8 @@ class Funnel:
             lambda row: row.map(pr_mapping).prod(), axis=1
         )
 
-        # label_mapping = {key: values["label"] for key, values in values_map.items()}
-        # results_df[inputs] = results_df[inputs].replace(label_mapping)
+        label_mapping = {key: values["label"] for key, values in values_map.items()}
+        results_df[inputs] = results_df[inputs].replace(label_mapping)
         self.sim_result = results_df
         # Reset all input nodes to median value
         self.nodes_collection.reset_input_nodes()
@@ -111,7 +113,7 @@ class Funnel:
                 for i in labels_list:
                     other_cols = [x for x in self.input_node_names if x != input]
                     lookup = df[
-                        (df[input] == i) & ((df[other_cols] == "mid").all(axis=1))
+                        (df[input] == i) & ((df[other_cols] == "value_mid").all(axis=1))
                     ]
                     calculations_df.loc[input, f"{kpi}_{i}"] = lookup[kpi].values[0]
 
