@@ -16,6 +16,22 @@ from decision_analytics.metalogistic import MetaLogistic
 
 
 class Funnel:
+    """
+    This class contains funnel simulation methods. The NodesCollection class is the state instance.
+    It contains all methods related to nodes definition and state calculations (the state machine).
+    The Funnel class contains methods related to simulating funnel variance based on provided
+    input node ranges, as well as calculating the combined uncertainty effects across multiple input variables,
+    which is necessary to build the tornado chart.
+
+    There are two main methods:
+    simulate_input_variance
+        This method creates a list of all possible combinations of input values, and evaluate all
+        funnel KPI nodes for each combination. This result is used to calculate input swings.
+    calculate_input_swing
+        This method calculates the contribution of input swings of each input. This is done by
+        evaluating the output values when all other factors are held at the median value.
+    """
+
     def __init__(self, nodes_collection: NodesCollection):
         self.nodes_collection = nodes_collection
         self.input_node_names = [

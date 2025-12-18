@@ -13,7 +13,7 @@ A Python library for decision analysis that enables the creation and analysis of
 
 ## Installation
 
-You can install the package using pip:
+You can install the package using pip (pending availability on PyPI):
 
 ```bash
 pip install decision_analytics
@@ -22,9 +22,6 @@ pip install decision_analytics
 Requirements:
 
 - Python ≥ 3.11
-- pandas
-- plotly
-- nbformat
 
 ## Usage Example
 
@@ -45,14 +42,18 @@ input_nodes = [
         "value": 10000,
         "format_str": "",
         "input_type": "input",
-        "value_percentiles": (0.1 * 10000, 0.5 * 10000, 0.9 * 10000),
+        "value_low": 8000,
+        "value_mid": 10000,
+        "value_high": 12000,
     },
     {
         "name": "subscribe_rate",
         "value": 0.5,
         "format_str": ".2%",
         "input_type": "input",
-        "value_percentiles": (0.45, 0.5, 0.6),
+        "value_low: 0.4,
+        "value_mid": 0.5,
+        "value_high": 0.7,
     },
     {
         "name": "ctr",
@@ -60,14 +61,18 @@ input_nodes = [
         "value": 0.1,
         "format_str": ".2%",
         "input_type": "input",
-        "value_percentiles": (0.08, 0.1, 0.11),
+        "value_low": 0.08,
+        "value_mid": 0.1,
+        "value_high": 0.11,
     },
     {
         "name": "sale_success_rate",
         "value": 0.3,
         "format_str": ".2%",
         "input_type": "input",
-        "value_percentiles": (0.1, 0.3, 0.5),
+        "value_low": 0.2,
+        "value_mid": 0.3,
+        "value_high": 0.4,
     },
 ]
 
@@ -123,6 +128,18 @@ metalog = funnel.get_metalog(kpi)
 print(f"80th percentile: {metalog.quantile([0.8])[0]}")
 print(f"99th percentile: {metalog.quantile([0.99])[0]}")
 metalog.print_summary()
+
+# Unit tests for node calculations:
+# Update input node values and verify calculations
+input_values = {
+    "total_users": 15000,
+    "subscribe_rate": 0.6,
+    "ctr": 0.12,
+    "sale_success_rate": 0.35,
+}
+funnel.nodes_collection.set_input_values_from_dict(input_values)
+funnel.nodes_collection.refresh_nodes()
+funnel.nodes_collection.get_calculated_nodes()
 ```
 
 This basic example demonstrates how to:
