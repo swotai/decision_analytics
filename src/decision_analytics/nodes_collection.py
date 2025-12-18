@@ -39,7 +39,9 @@ class NodesCollection:
                 "name": node.name,
                 "format_str": node.format_str,
                 "input_type": node.input_type,
-                "value_percentiles": node.value_percentiles,
+                "value_low": node.value_low,
+                "value_mid": node.value_mid,
+                "value_high": node.value_high,
                 "long_name": node.long_name,
                 "description": node.description,
                 "value": node.value,
@@ -144,14 +146,19 @@ class NodesCollection:
                     )
 
                 if lookup:
-                    # Only do lookup if value_percentile exists. Otherwise don't update the value
-                    if node.value_percentiles:
-                        # Ensure value is an integer index for the percentiles tuple
+                    # Only do lookup if value percentiles exist. Otherwise don't update the value
+                    if all([node.value_low, node.value_mid, node.value_high]):
+                        # Ensure value is an integer index for the percentiles
                         if not isinstance(value, int) or value not in [0, 1, 2]:
                             raise ValueError(
                                 f"When using lookup, value must be 0, 1, or 2 for 10th, 50th, or 90th percentile. Got {value}"
                             )
-                        v = node.value_percentiles[value]
+                        if value == 0:
+                            v = node.value_low
+                        elif value == 1:
+                            v = node.value_mid
+                        else:
+                            v = node.value_high
                     else:
                         v = node.value
                 else:
@@ -164,47 +171,6 @@ class NodesCollection:
             except AttributeError:
                 raise ValueError(
                     f"Node '{node_name}' does not have a 'value' attribute."
-                )
-
-    def set_node_percentiles_from_dict(self, percentiles_dict: dict) -> None:
-        """
-        Set the value_percentiles of nodes from a dictionary.
-
-        Parameters
-        ----------
-        percentiles_dict : dict
-            Dictionary, with the input node name as key, and the desired 3-value tuple as value.
-
-        Raises
-        ------
-        ValueError
-            If node does not exist.
-        ValueError
-            If the value provided is not a tuple of length 3.
-        ValueError
-            If any item in the tuple is not a number (int/float).
-        """
-        for node_name, percentiles in percentiles_dict.items():
-            try:
-                node = self.get_node(node_name)
-                if node is None:
-                    raise ValueError(f"Node '{node_name}' does not exist.")
-                if not isinstance(percentiles, tuple) or len(percentiles) != 3:
-                    raise ValueError(
-                        f"Percentiles must be a tuple of length 3 for node '{node_name}'."
-                    )
-                if not all(isinstance(p, (int, float)) for p in percentiles):
-                    raise ValueError(
-                        f"All percentile values must be numbers for node '{node_name}'."
-                    )
-                node.value_percentiles = percentiles
-            except KeyError:
-                raise ValueError(
-                    f"Percentiles '{percentiles}' is not a valid percentile for node '{node_name}'."
-                )
-            except AttributeError:
-                raise ValueError(
-                    f"Node '{node_name}' does not have a 'value_percentiles' attribute."
                 )
 
     def get_node(self, name: str) -> Node:
@@ -328,6 +294,17 @@ class NodesCollection:
         self.nodes = dict(sorted(self.nodes.items(), key=lambda item: item[1].rank))
 
     def refresh_nodes(self):
+        """
+        Re-evaluates and updates the values of all nodes in the collection,
+        especially calculated nodes, based on their dependencies.
+
+        This method performs the following steps:
+        1. Re-ranks all nodes to ensure correct evaluation order based on dependencies.
+        2. Iterates through the ranked nodes and, for each CalculatedNode,
+           safely evaluates its definition using the current values of its
+           dependent nodes.
+        3. Logs warnings if no calculated node is designated as a Key Performance Indicator (KPI).
+        """
         self._rank_nodes()
         ordered_list = [node for node in self.nodes]
         logging.debug(f"Ordered list: {ordered_list}")
@@ -383,16 +360,9 @@ class NodesCollection:
             # Check if the node is an input node
             if node.input_type is not None:
                 # If value percentiles are defined and is a 3 element tuple, use the median (50th percentile)
-                if (
-                    hasattr(node, "value_percentiles")
-                    and node.value_percentiles
-                    and len(node.value_percentiles) == 3
-                ):
+                if all([node.value_low, node.value_mid, node.value_high]):
                     try:
-                        # Assuming value_percentiles is a tuple of (min, max, percentiles)
-                        # and percentiles is a list/tuple of values
-                        median_index = len(node.value_percentiles) // 2
-                        node.value = node.value_percentiles[median_index]
+                        node.value = node.value_mid
                     except (IndexError, TypeError):
                         # If percentiles can't be processed, set to None
                         node.value = None

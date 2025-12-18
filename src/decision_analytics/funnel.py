@@ -29,10 +29,10 @@ class Funnel:
         Workflow to complete simulation, first simulating variance by each input's low/mid/high values.
         Then updates calculations based on these simulated variances for all KPIs.
         """
-        self.simulate_variances()
-        self.update_calculations()
+        self.simulate_input_variance()
+        self.calculate_inputs_swing()
 
-    def simulate_variances(self) -> pd.DataFrame:
+    def simulate_input_variance(self) -> pd.DataFrame:
         """
         Simulates all variations of the funnel by looping through all nodes and their value percentiles.
         Stores the results in self.sim_result.
@@ -40,8 +40,8 @@ class Funnel:
         Returns
         -------
         pd.DataFrame
-            Result dataframe with all simulated scenarios (inputs x low/mid/high). Dataframe is kept
-            as instance property.
+            Result dataframe with all simulated scenarios (inputs x low/mid/high values).
+            Dataframe is kept as instance property.
 
         Raises
         ------
@@ -82,13 +82,12 @@ class Funnel:
         )
 
         label_mapping = {key: values["label"] for key, values in values_map.items()}
-        results_df[inputs] = results_df[inputs].replace(label_mapping)
         self.sim_result = results_df
         # Reset all input nodes to median value
         self.nodes_collection.reset_input_nodes()
         return results_df
 
-    def update_calculations(self) -> pd.DataFrame:
+    def calculate_inputs_swing(self) -> pd.DataFrame:
         """
         Update variance calculations based on the current simulation results for all KPIs.
 
@@ -139,19 +138,18 @@ class Funnel:
         calculations_df.rename(
             index=self.nodes_collection.get_nodes_mapping(), inplace=True
         )
-        self.calculations_result = calculations_df
+        self.input_swing_df = calculations_df
         return calculations_df
 
     def get_tornado_chart(self, kpi: str):
-        df = self.calculations_result.sort_values(
+        df = self.input_swing_df.sort_values(
             by=f"{kpi}_swing_squared", na_position="first"
         )
         return plot_tornado(df=df, kpi=kpi)
 
     def get_metalog(self, kpi: str):
-        calc_result = self.calculations_result.loc[
-            "Combined Uncertainty", [f"{kpi}_low", f"{kpi}_mid", f"{kpi}_high"]
-        ]
+        calc_result = self.input_swing_df.loc["Combined Uncertainty"]
+        calc_result = calc_result[[f"{kpi}_low", f"{kpi}_mid", f"{kpi}_high"]]
         return MetaLogistic(cdf_xs=calc_result.tolist(), cdf_ps=[0.1, 0.5, 0.9])
 
     def get_cdf_chart(self, report_kpi: str):

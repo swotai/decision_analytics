@@ -69,11 +69,11 @@ print(total_sales.value)
 
 # %%
 testf = Funnel(nodes_collection=test)
-a = testf.simulate_variances()
+a = testf.simulate_input_variance()
 a
 
 # %%
-b = testf.update_calculations()
+b = testf.calculate_inputs_swing()
 b = b.sort_values(by="total_sales_swing_squared", ascending=True, na_position="first")
 # %%
 kpi = "total_sales"

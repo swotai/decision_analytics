@@ -32,7 +32,10 @@ def test_set_node_values_from_dict_success():
         "format_str": "",
         "input_type": "input",
         "value": 10,
-        "value_percentiles": (5, 10, 15),
+        # "value_percentiles": (5, 10, 15),
+        "value_low": 5,
+        "value_mid": 10,
+        "value_high": 15,
     }
     collection.add_nodes([node])
     collection.set_node_values_from_dict({"node1": 1})
@@ -79,7 +82,9 @@ def test_set_node_values_from_dict_invalid_lookup_value():
         "format_str": "",
         "input_type": "input",
         "value": 10,
-        "value_percentiles": (5, 10, 15),
+        "value_low": 5,
+        "value_mid": 10,
+        "value_high": 15,
     }
     collection.add_nodes([node])
     with pytest.raises(
@@ -87,14 +92,6 @@ def test_set_node_values_from_dict_invalid_lookup_value():
         match="When using lookup, value must be 0, 1, or 2 for 10th, 50th, or 90th percentile. Got 5",
     ):
         collection.set_node_values_from_dict({"node1": 5})
-
-
-def test_set_node_percentiles_from_dict_success():
-    collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
-    collection.add_nodes([node])
-    collection.set_node_percentiles_from_dict({"node1": (1, 2, 3)})
-    assert collection.get_node("node1").value_percentiles == (1, 2, 3)
 
 
 def test_set_node_values_from_dict_key_error():
@@ -296,7 +293,9 @@ def test_reset_input_nodes_with_percentiles():
         "format_str": "",
         "input_type": "input",
         "value": 10,
-        "value_percentiles": (5, 10, 15),
+        "value_low": 5,
+        "value_mid": 10,
+        "value_high": 15,
     }
     collection.add_nodes([node])
     collection.get_node("node1").value = 99  # Change value to ensure it resets
@@ -313,7 +312,9 @@ def test_reset_input_nodes_without_percentiles():
         "format_str": "",
         "input_type": "input",
         "value": 10,
-        "value_percentiles": None,
+        "value_low": None,
+        "value_mid": None,
+        "value_high": None,
     }
     collection.add_nodes([node])
     collection.get_node("node1").value = (
@@ -339,37 +340,3 @@ def test_repr():
         "NodesCollection with 2 nodes: 1 input nodes and 1 calculated nodes."
         == collection.__repr__()
     )
-
-
-def test_set_node_percentiles_from_dict_node_not_exist():
-    collection = NodesCollection()
-    with pytest.raises(ValueError, match="Node 'nonexistent_node' does not exist."):
-        collection.set_node_percentiles_from_dict({"nonexistent_node": (1, 2, 3)})
-
-
-def test_set_node_percentiles_from_dict_invalid_length_tuple():
-    collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
-    collection.add_nodes([node])
-    with pytest.raises(
-        ValueError, match="Percentiles must be a tuple of length 3 for node 'node1'."
-    ):
-        collection.set_node_percentiles_from_dict({"node1": (1, 2)})
-
-
-def test_set_node_percentiles_from_dict_non_numeric_values():
-    collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
-    collection.add_nodes([node])
-    with pytest.raises(
-        ValueError, match="All percentile values must be numbers for node 'node1'."
-    ):
-        collection.set_node_percentiles_from_dict({"node1": (1, "a", 3)})
-
-
-def test_set_node_percentiles_from_dict_key_error():
-    collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
-    collection.add_nodes([node])
-    with pytest.raises(ValueError, match="Node 'nodeX' does not exist."):
-        collection.set_node_percentiles_from_dict({"nodeX": (1, 2, 3)})

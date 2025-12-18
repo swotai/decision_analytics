@@ -10,7 +10,9 @@ class Node:
         name: str,
         format_str: str,
         input_type: str,
-        value_percentiles: Optional[tuple] = None,
+        value_low: Optional[float] = None,
+        value_mid: Optional[float] = None,
+        value_high: Optional[float] = None,
         long_name: Optional[str] = None,
         description: Optional[str] = None,
         value: Optional[float] = None,
@@ -28,8 +30,12 @@ class Node:
             If left blank, large numbers will be converted to readable format with K/M/B/T.
         input_type : str
             The type of input for the node, should be either "input" or "calculation".
-        value_percentiles : Optional[tuple], optional
-            The tuple of values for the node at the 10th, 50th, and 90th percentiles. By default None.
+        value_low : Optional[float], optional
+            The lower bound value for the node (10th percentile), by default None.
+        value_mid : Optional[float], optional
+            The middle value for the node (50th percentile), by default None.
+        value_high : Optional[float], optional
+            The upper bound value for the node (90th percentile), by default None.
         long_name : Optional[str], optional
             A longer, more descriptive name for the node, by default None.
             If left blank, will convert regular_name to Regular Name.
@@ -47,7 +53,7 @@ class Node:
         ValueError
             If input_type is not 'input' or 'calculation'.
         ValueError
-            If value_percentiles is provided and does not contain exactly 3 values.
+            If value_low, value_mid, and value_high are not consistently provided or ordered.
         """
         # Check for invalid inputs
         if input_type == "input" and value is None:
@@ -76,16 +82,24 @@ class Node:
         else:
             # default 2 decimal places
             self.format_str = ".2f"
-        if value_percentiles == ():
-            value_percentiles = None
-        if value_percentiles is not None and len(value_percentiles) != 3:
+        # Value percentiles
+        self.value_low = value_low
+        self.value_mid = value_mid
+        self.value_high = value_high
+
+        if any([value_low, value_mid, value_high]) and not all(
+            [value_low, value_mid, value_high]
+        ):
             raise ValueError(
-                "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
+                "If any of value_low, value_mid, or value_high are provided, all three must be provided."
             )
-        # self.value_percentiles = (
-        #     value_percentiles if value_percentiles is not None else [None, None, None]
-        # )
-        self.value_percentiles = value_percentiles
+        if (
+            all([value_low, value_mid, value_high])
+            and not value_low <= value_mid <= value_high
+        ):
+            raise ValueError(
+                "value_low, value_mid, and value_high must be in ascending order."
+            )
         # rank, for sorting nodes
         self.rank = 0
 
@@ -100,8 +114,8 @@ class Node:
 
     def __repr__(self):
         repr_node_desc = f"{self.name} (Type: {self.input_type}, Value:{self._pretty_value()}, Rank: {self.rank})"
-        if self.value_percentiles:
-            repr_node_desc += f", Input Range: {self.value_percentiles}"
+        if all([self.value_low, self.value_mid, self.value_high]):
+            repr_node_desc += f", Input Range: ({self.value_low}, {self.value_mid}, {self.value_high})"
         return repr_node_desc
 
     def get_chart_str(self) -> str:
@@ -114,18 +128,6 @@ class Node:
         """
         chart_str = f"{self.long_name}\n{self._pretty_value()}"
         return chart_str
-
-    def update_value_percentiles(self, value_percentiles: tuple) -> None:
-        if value_percentiles is not None and len(value_percentiles) != 3:
-            raise ValueError(
-                "Range must contain exactly 3 values representing 10th, 50th, and 90th percentiles"
-            )
-        if not all(x < y for x, y in zip(value_percentiles, value_percentiles[1:])):
-            raise ValueError("Values in value_percentiles must be in ascending order")
-        self.value_percentiles = value_percentiles
-        logging.debug(
-            f"Added value percentiles to node {self.name}: {value_percentiles}"
-        )
 
     def update_value(self, new_value: float) -> None:
         """
