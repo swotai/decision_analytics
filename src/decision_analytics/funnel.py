@@ -64,13 +64,16 @@ class Funnel:
         for combo in all_combinations:
             combo_dict = dict(zip(inputs, combo))
             self.nodes_collection.set_node_values_from_dict(combo_dict)
+            # rebuild combo_dict for logging, extract the values from actual inputs
+            values = [self.nodes_collection.get_node(i).value for i in inputs]
+            combo_dict_output = dict(zip(inputs, values))
             logging.debug(combo_dict)
             logging.debug(self.nodes_collection.get_input_nodes())
             self.nodes_collection.refresh_nodes()
             kpi_values = [node.value for node in self.nodes_collection.get_kpi_nodes()]
             results.append(
                 {
-                    **combo_dict,
+                    **combo_dict_output,
                     **{k: v for k, v in zip(kpis, kpi_values)},
                 }
             )
@@ -81,8 +84,8 @@ class Funnel:
             lambda row: row.map(pr_mapping).prod(), axis=1
         )
 
-        label_mapping = {key: values["label"] for key, values in values_map.items()}
-        results_df[inputs] = results_df[inputs].replace(label_mapping)
+        # label_mapping = {key: values["label"] for key, values in values_map.items()}
+        # results_df[inputs] = results_df[inputs].replace(label_mapping)
         self.sim_result = results_df
         # Reset all input nodes to median value
         self.nodes_collection.reset_input_nodes()
