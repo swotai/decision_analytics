@@ -1,5 +1,4 @@
 import streamlit as st
-import json
 from decision_analytics import NodesCollection, Funnel
 
 # Initialize session state for nodes collection if it doesn't exist

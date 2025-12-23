@@ -8,10 +8,10 @@
 # Sample input nodes:
 
 input = [
-    {"name": "total_users", "value": 1000000, "format": "", "input_type": "input"},
-    {"name": "subscribe_rate", "value": 0.2, "format": ".2%", "input_type": "input"},
-    {"name": "ctr", "value": 0.2, "format": ".2%", "input_type": "input"},
-    {"name": "sale_success_rate", "value": 0.2, "format": "", "input_type": "input"},
+    {"name": "total_users", "value": 1000000, "format": "", "node_type": "input"},
+    {"name": "subscribe_rate", "value": 0.2, "format": ".2%", "node_type": "input"},
+    {"name": "ctr", "value": 0.2, "format": ".2%", "node_type": "input"},
+    {"name": "sale_success_rate", "value": 0.2, "format": "", "node_type": "input"},
 ]
 
 
@@ -23,24 +23,24 @@ relationships = [
         "name": "total_subscribers",
         "definition": "total_users * subscribe_rate",
         "format": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
     },
     {
         "name": "total_clicks",
         "definition": "total_subscribers * ctr",
         "format": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
     },
     {
         "name": "total_sales",
         "definition": "total_clicks * sale_success_rate",
         "format": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
     },
     {
         "name": "conversion_rate",
         "definition": "subscribe_rate * ctr * buy_rate",
         "format": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
     },
 ]

@@ -5,7 +5,7 @@ from decision_analytics import NodesCollection
 
 def test_add_single_node():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     assert len(collection.nodes) == 1
     assert collection.get_node("node1").value == 10
@@ -19,7 +19,7 @@ def test_get_nonexistent_node():
 
 def test_remove_node():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     collection.remove_node("node1")
     assert len(collection.nodes) == 0
@@ -30,7 +30,7 @@ def test_set_node_values_from_dict_success():
     node = {
         "name": "node1",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 10,
         # "value_percentiles": (5, 10, 15),
         "value_low": 5,
@@ -55,7 +55,7 @@ def test_set_node_values_from_dict_calculated_node():
     node = {
         "name": "node1",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "1+1",
     }
     collection.add_nodes([node])
@@ -67,7 +67,7 @@ def test_set_node_values_from_dict_calculated_node():
 
 def test_set_node_values_from_dict_invalid_number():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     with pytest.raises(
         ValueError, match="Value 'abc' is not a valid number for node 'node1'."
@@ -80,7 +80,7 @@ def test_set_node_values_from_dict_invalid_lookup_value():
     node = {
         "name": "node1",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 10,
         "value_low": 5,
         "value_mid": 10,
@@ -96,7 +96,7 @@ def test_set_node_values_from_dict_invalid_lookup_value():
 
 def test_set_node_values_from_dict_key_error():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     with pytest.raises(ValueError, match="Node 'nodeX' does not exist."):
         collection.set_node_values_from_dict({"nodeX": 20})
@@ -104,7 +104,7 @@ def test_set_node_values_from_dict_key_error():
 
 def test_set_node_values_from_dict_no_percentiles():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     collection.set_node_values_from_dict({"node1": 20}, lookup=False)
     assert collection.get_node("node1").value == 20
@@ -112,15 +112,15 @@ def test_set_node_values_from_dict_no_percentiles():
 
 def test_to_json():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
     }
     collection.add_nodes([node1, node2])
-    json_str = collection.to_json()
+    json_str = collection.to_json_str()
     assert isinstance(json_str, str)
     assert "node1" in json_str
     assert "node2" in json_str
@@ -134,7 +134,7 @@ def test_from_json_success():
         {
             "name": "nodeA",
             "format_str": "",
-            "input_type": "input",
+            "node_type": "input",
             "value": 5,
             "is_kpi": false,
             "readable_large_number": false
@@ -142,14 +142,14 @@ def test_from_json_success():
         {
             "name": "nodeB",
             "format_str": "",
-            "input_type": "calculation",
+            "node_type": "calculation",
             "definition": "nodeA * 10",
             "is_kpi": true,
             "readable_large_number": false
         }
     ]
     """
-    collection.from_json(json_data)
+    collection.from_json_str(json_data)
     assert len(collection.nodes) == 2
     assert collection.get_node("nodeA").value == 5
     assert collection.nodes["nodeB"].definition == "nodeA * 10"
@@ -158,7 +158,7 @@ def test_from_json_success():
 def test_from_json_invalid_json_string():
     collection = NodesCollection()
     with pytest.raises(ValueError, match="Invalid JSON string"):
-        collection.from_json("invalid json")
+        collection.from_json_str("invalid json")
 
 
 def test_from_json_not_list():
@@ -166,19 +166,19 @@ def test_from_json_not_list():
     with pytest.raises(
         ValueError, match="JSON must contain a list of node definitions"
     ):
-        collection.from_json('{"name": "node1"}')
+        collection.from_json_str('{"name": "node1"}')
 
 
 def test_get_unused_nodes():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
     }
-    node3 = {"name": "node3", "format_str": "", "input_type": "input", "value": 5}
+    node3 = {"name": "node3", "format_str": "", "node_type": "input", "value": 5}
     collection.add_nodes([node1, node2, node3])
     unused_nodes = collection.get_unused_nodes()
     assert len(unused_nodes) == 1
@@ -187,11 +187,11 @@ def test_get_unused_nodes():
 
 def test_check_valid_definitions_success():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 + 2",
     }
     collection.add_nodes([node1, node2])
@@ -200,11 +200,11 @@ def test_check_valid_definitions_success():
 
 def test_check_valid_definitions_invalid_variable():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 + nodeX",
     }
     with pytest.raises(
@@ -215,11 +215,11 @@ def test_check_valid_definitions_invalid_variable():
 
 def test_check_valid_definitions_invalid_character():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 @ 2",
     }
     with pytest.raises(
@@ -230,17 +230,17 @@ def test_check_valid_definitions_invalid_character():
 
 def test_rank_nodes_success():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
     }
     node3 = {
         "name": "node3",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node2 + 5",
     }
     collection.add_nodes([node1, node2, node3])
@@ -254,13 +254,13 @@ def test_rank_nodes_unresolvable_dependency():
     node1 = {
         "name": "node1",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node2 + 1",
     }
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
     }
     with pytest.raises(ValueError, match="Unresolvable dependencies detected"):
@@ -273,11 +273,11 @@ def test_refresh_nodes_no_kpi_warning(caplog):
     caplog.set_level(logging.WARNING)
 
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
         "is_kpi": False,
     }
@@ -291,7 +291,7 @@ def test_reset_input_nodes_with_percentiles():
     node = {
         "name": "node1",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 10,
         "value_low": 5,
         "value_mid": 10,
@@ -310,7 +310,7 @@ def test_reset_input_nodes_without_percentiles():
     node = {
         "name": "node1",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 10,
         "value_low": None,
         "value_mid": None,
@@ -328,11 +328,11 @@ def test_reset_input_nodes_without_percentiles():
 
 def test_repr():
     collection = NodesCollection()
-    node1 = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node1 = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     node2 = {
         "name": "node2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "definition": "node1 * 2",
     }
     collection.add_nodes([node1, node2])

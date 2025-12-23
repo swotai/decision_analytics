@@ -9,7 +9,7 @@ def setup_nodes():
     input_node = {
         "name": "input1",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 10,
         "value_low": 8,
         "value_mid": 10,
@@ -18,7 +18,7 @@ def setup_nodes():
     input_node2 = {
         "name": "input2",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 3,
         "value_low": 2,
         "value_mid": 3,
@@ -27,7 +27,7 @@ def setup_nodes():
     input_node_3 = {
         "name": "input3",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value": 3,
         "value_low": 0.25,
         "value_mid": 0.9,
@@ -37,14 +37,14 @@ def setup_nodes():
         "name": "output1",
         "definition": "input1 * input2",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "is_kpi": True,
     }
     calculated_node2 = {
         "name": "output2",
         "definition": "input2 * input3",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "is_kpi": True,
     }
     collection.add_nodes(

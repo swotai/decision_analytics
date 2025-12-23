@@ -15,7 +15,7 @@ flowchart TD
 """
     for node in nodes_collection.nodes.values():
         node_style = "default"
-        if node.input_type == "calculation":
+        if node.node_type == "calculation":
             node_style = "rounded"
         if node.is_kpi:
             node_style = "stadium"

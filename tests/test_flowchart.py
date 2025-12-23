@@ -6,7 +6,7 @@ from decision_analytics.plotting_utils import generate_funnel_chart_mermaid_code
 
 def test_generate_funnel_chart_mermaid_code():
     collection = NodesCollection()
-    node = {"name": "node1", "format_str": "", "input_type": "input", "value": 10}
+    node = {"name": "node1", "format_str": "", "node_type": "input", "value": 10}
     collection.add_nodes([node])
     collection.add_nodes(
         [
@@ -14,7 +14,7 @@ def test_generate_funnel_chart_mermaid_code():
                 "name": "calculated_node",
                 "definition": "node1 * 2",
                 "format_str": "",
-                "input_type": "calculation",
+                "node_type": "calculation",
             }
         ]
     )

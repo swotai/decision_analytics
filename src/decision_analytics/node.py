@@ -9,7 +9,7 @@ class Node:
         self,
         name: str,
         format_str: str,
-        input_type: str,
+        node_type: str,
         value_low: Optional[float] = None,
         value_mid: Optional[float] = None,
         value_high: Optional[float] = None,
@@ -18,6 +18,7 @@ class Node:
         value: Optional[float] = None,
         is_kpi: Optional[bool] = False,
         readable_large_number: bool = True,
+        **kwargs,
     ):
         """Initializes a node object
 
@@ -28,7 +29,7 @@ class Node:
         format_str : str
             The format string for the node's value. For example, ".2%" for percentage values.
             If left blank, large numbers will be converted to readable format with K/M/B/T.
-        input_type : str
+        node_type : str
             The type of input for the node, should be either "input" or "calculation".
         value_low : Optional[float], optional
             The lower bound value for the node (10th percentile), by default None.
@@ -49,21 +50,21 @@ class Node:
         Raises
         ------
         ValueError
-            If input_type is 'input' and value is None.
+            If node_type is 'input' and value is None.
         ValueError
-            If input_type is not 'input' or 'calculation'.
+            If node_type is not 'input' or 'calculation'.
         ValueError
             If value_low, value_mid, and value_high are not consistently provided or ordered.
         """
         # Check for invalid inputs
-        if input_type == "input" and value is None:
-            raise ValueError("Value must be provided when input_type is 'input'")
-        if input_type not in ["input", "calculation"]:
-            raise ValueError("input_type must be either 'input' or 'calculation'")
+        if node_type == "input" and value is None:
+            raise ValueError("Value must be provided when node_type is 'input'")
+        if node_type not in ["input", "calculation"]:
+            raise ValueError("node_type must be either 'input' or 'calculation'")
 
         # metadata attributes
         self.name = name
-        self.input_type = input_type
+        self.node_type = node_type
         self.readable_large_number = readable_large_number
         self.long_name = (
             name.replace("_", " ").title()
@@ -71,7 +72,7 @@ class Node:
             else long_name
         )
         self.description = description
-        if is_kpi and input_type == "input":
+        if is_kpi and node_type == "input":
             raise ValueError("KPIs cannot be input node.")
         self.is_kpi = is_kpi
 
@@ -113,7 +114,7 @@ class Node:
             return "N/A"
 
     def __repr__(self):
-        repr_node_desc = f"{self.name} (Type: {self.input_type}, Value:{self._pretty_value()}, Rank: {self.rank})"
+        repr_node_desc = f"{self.name} (Type: {self.node_type}, Value:{self._pretty_value()}, Rank: {self.rank})"
         if all([self.value_low, self.value_mid, self.value_high]):
             repr_node_desc += f", Input Range: ({self.value_low}, {self.value_mid}, {self.value_high})"
         return repr_node_desc
@@ -138,7 +139,7 @@ class Node:
         new_value : float
             The new value to set for the node.
         """
-        if self.input_type == "input" and new_value is None:
-            raise ValueError("Value must be provided when input_type is 'input'")
+        if self.node_type == "input" and new_value is None:
+            raise ValueError("Value must be provided when node_type is 'input'")
         self.value = new_value
         logging.debug(f"Updated value of node {self.name} to: {new_value}")

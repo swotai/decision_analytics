@@ -1,176 +1,94 @@
-import ast
-
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from decision_analytics import Funnel
+from decision_analytics import Funnel, NodesCollection
 from decision_analytics.plotting_utils.flowchart import (
     generate_funnel_chart_mermaid_code,
 )
 
+if "nodes_collection" not in st.session_state:
+    st.session_state.nodes_collection = NodesCollection()
+    st.session_state.funnel = Funnel(st.session_state.nodes_collection)
 
-def sync_nodes_with_state(nodes_df: pd.DataFrame):
-    # Remove nodes no longer in the dataframe
-    current_node_names = set(st.session_state.nodes_collection.nodes.keys())
-    df_node_names = set(nodes_df["Name"])
-
-    nodes_to_remove = current_node_names - df_node_names
-    for node_name in nodes_to_remove:
-        # logging.debug(f"Removing node {node_name} from nodes collection")
-        st.session_state.nodes_collection.remove_node(node_name)
-
-
-def update_nodes_from_dataframe(edited_df, node_type="input"):
-    """Update nodes collection from edited dataframe"""
-    try:
-        for _, row in edited_df.iterrows():
-            node_data = {
-                "name": row["Name"],
-                "long_name": row["Long Name"],
-                "description": row["Description"],
-                "format_str": row["Format"],
-                "is_kpi": row["Is KPI"],
-                "input_type": row["Input Type"],
-            }
-            if node_type == "input":
-                # Handle value percentiles
-                try:
-                    if pd.notna(row["Value Percentiles"]):
-                        percentiles = ast.literal_eval(row["Value Percentiles"])
-                        if isinstance(percentiles, (list, tuple)):
-                            node_data["value_percentiles"] = tuple(percentiles)
-                except:
-                    node_data["value_percentiles"] = None
-
-                node_data["value"] = row["Value"] if pd.notna(row["Value"]) else None
-            else:
-                node_data["definition"] = row["Definition"]
-
-            # Update or add node to collection
-            st.session_state.nodes_collection.add_nodes([node_data])
-
-        # Refresh calculations
-        st.session_state.nodes_collection.refresh_nodes()
-        st.session_state.funnel = Funnel(st.session_state.nodes_collection)
-        st.session_state.funnel.simulate()
-    except Exception as e:
-        st.error(f"Error updating nodes: {str(e)}")
-
+if "nodes_df" not in st.session_state:
+    pass
 
 st.title("Funnel Builder")
 
 # Split the page into two columns
 left_col, right_col = st.columns([0.6, 0.4])
 
+# Backup table config:
+# column_config={
+#     "Name": st.column_config.TextColumn("Name", required=True),
+#     "Long Name": st.column_config.TextColumn("Long Name"),
+#     "Description": st.column_config.TextColumn("Description"),
+#     "Value": st.column_config.NumberColumn("Value"),
+#     "Value Low": st.column_config.NumberColumn("Value"),
+#     "Value Mid": st.column_config.NumberColumn("Value"),
+#     "Value High": st.column_config.NumberColumn("Value"),
+#     "Format": st.column_config.TextColumn("Format"),
+#     "Is KPI": st.column_config.CheckboxColumn(
+#         "Is KPI", default=False, disabled=True
+#     ),
+#     "Input Type": st.column_config.TextColumn("Input Type", required=True),
+# },
+
+
+def update_df():
+    st.session_state.nodes_df = pd.concat(
+        [editable_input_df, editable_calc_df],
+        ignore_index=True,
+    )
+
+
+def update_nodes_collection_from_df():
+    st.session_state.nodes_json_str = st.session_state.nodes_df.to_json(
+        orient="records"
+    )
+
+    try:
+        # Update nodes collection
+        st.session_state.nodes_collection.from_json_str(st.session_state.nodes_json_str)
+        st.session_state.funnel = Funnel(st.session_state.nodes_collection)
+        st.session_state.funnel.simulate()
+        st.success("Funnel definition updated successfully!")
+
+    except Exception as e:
+        st.error(f"Error updating nodes collection: {str(e)}")
+
+
+st.write(st.session_state)
+
 with left_col:
     # Input Nodes Table
     st.subheader("Input Nodes")
-    input_nodes = st.session_state.nodes_collection.get_input_nodes()
-    if input_nodes:
-        input_df = pd.DataFrame(
-            [
-                {
-                    "Name": node.name,
-                    "Long Name": node.long_name,
-                    "Description": node.description,
-                    "Value": node.value,
-                    "Value Percentiles": str(node.value_percentiles),
-                    "Format": node.format_str,
-                    "Is KPI": node.is_kpi,
-                    "Input Type": node.input_type,
-                }
-                for node in input_nodes
-            ]
-        )
-        # Store the edited dataframe in session state
-        if "edited_input_df" not in st.session_state:
-            st.session_state.edited_input_df = input_df.copy()
-
-        edited_input_df = st.data_editor(
-            st.session_state.edited_input_df,
-            width="stretch",
-            num_rows="dynamic",
-            column_config={
-                "Name": st.column_config.TextColumn("Name", required=True),
-                "Long Name": st.column_config.TextColumn("Long Name"),
-                "Description": st.column_config.TextColumn("Description"),
-                "Value": st.column_config.NumberColumn("Value"),
-                "Value Percentiles": st.column_config.TextColumn("Value Percentiles"),
-                "Format": st.column_config.TextColumn("Format"),
-                "Is KPI": st.column_config.CheckboxColumn(
-                    "Is KPI", default=False, disabled=True
-                ),
-                "Input Type": st.column_config.TextColumn("Input Type", required=True),
-            },
-            key="input_nodes_editor",
-        )
-        # Update the session state edited dataframe
-        st.session_state.edited_input_df = edited_input_df
-    else:
-        st.info("No input nodes available")
+    editable_input_df = st.data_editor(
+        st.session_state.nodes_df[st.session_state.nodes_df["node_type"] == "input"],
+        key="edited_input_df",
+        num_rows="dynamic",
+        width="stretch",
+    )
 
     # Calculated Nodes Table
     st.subheader("Calculated Nodes")
-    calc_nodes = st.session_state.nodes_collection.get_calculated_nodes()
-    if calc_nodes:
-        calc_df = pd.DataFrame(
-            [
-                {
-                    "Name": node.name,
-                    "Long Name": node.long_name,
-                    "Description": node.description,
-                    "Definition": node.definition,
-                    "Value": node.value,
-                    "Format": node.format_str,
-                    "Is KPI": node.is_kpi,
-                    "Input Type": node.input_type,
-                }
-                for node in calc_nodes
-            ]
-        )
-        # Store the edited dataframe in session state
-        if "edited_calc_df" not in st.session_state:
-            st.session_state.edited_calc_df = calc_df.copy()
+    editable_calc_df = st.data_editor(
+        st.session_state.nodes_df[
+            st.session_state.nodes_df["node_type"] == "calculation"
+        ],
+        key="edited_calc_df",
+        num_rows="dynamic",
+        width="stretch",
+    )
 
-        edited_calc_df = st.data_editor(
-            st.session_state.edited_calc_df,
-            width="stretch",
-            num_rows="dynamic",
-            column_config={
-                "Name": st.column_config.TextColumn("Name", required=True),
-                "Long Name": st.column_config.TextColumn("Long Name"),
-                "Description": st.column_config.TextColumn("Description"),
-                "Definition": st.column_config.TextColumn("Definition", required=True),
-                "Value": st.column_config.NumberColumn("Value", disabled=True),
-                "Format": st.column_config.TextColumn("Format"),
-                "Is KPI": st.column_config.CheckboxColumn("Is KPI"),
-                "Input Type": st.column_config.TextColumn("Input Type", required=True),
-            },
-            key="calc_nodes_editor",
-        )
-        # Update the session state edited dataframe
-        st.session_state.edited_calc_df = edited_calc_df
-    else:
-        st.info("No calculated nodes available")
-
-    # Single refresh button for both tables
     if st.button("Refresh All Data", key="refresh_all"):
-        current_editor_nodes = pd.concat(
-            [
-                st.session_state.edited_input_df[["Name"]],
-                st.session_state.edited_calc_df[["Name"]],
-            ]
-        )
-        sync_nodes_with_state(current_editor_nodes)
-        if input_nodes:
-            update_nodes_from_dataframe(st.session_state.edited_input_df, "input")
-        if calc_nodes:
-            update_nodes_from_dataframe(st.session_state.edited_calc_df, "calculation")
-
-    # Adding row works, but deleting doesn't.
+        update_df()
+        update_nodes_collection_from_df()
 
 
+# TODO: should we move mermaid code as a state within the funnel instance?
+# Also add drag and zoom: https://github.com/mermaid-js/mermaid/issues/2162#issuecomment-1542542439
 with right_col:
     st.subheader("Flowchart")
     mermaid_code = generate_funnel_chart_mermaid_code(st.session_state.nodes_collection)

@@ -24,7 +24,7 @@ class NodesCollection:
             f"{input_nodes_count} input nodes and {calculated_nodes_count} calculated nodes."
         )
 
-    def to_json(self) -> str:
+    def to_json_str(self) -> str:
         """
         Serializes all nodes in the collection to a JSON string.
 
@@ -38,7 +38,7 @@ class NodesCollection:
             node_dict = {
                 "name": node.name,
                 "format_str": node.format_str,
-                "input_type": node.input_type,
+                "node_type": node.node_type,
                 "value_low": node.value_low,
                 "value_mid": node.value_mid,
                 "value_high": node.value_high,
@@ -53,7 +53,7 @@ class NodesCollection:
             nodes_data.append(node_dict)
         return json.dumps(nodes_data)
 
-    def from_json(self, json_str: str) -> None:
+    def from_json_str(self, json_str: str) -> None:
         """
         Sets up all nodes from a JSON string, overwriting any existing nodes.
 
@@ -91,10 +91,15 @@ class NodesCollection:
             List of dictionaries each specifying one node. Can be either input or calculated node.
         """
         for node in nodes_list:
-            if "definition" in node.keys():
+            if node["node_type"] == "input":
+                self.nodes[node["name"]] = Node(**node)
+            elif node["node_type"] == "calculation":
                 self.nodes[node["name"]] = CalculatedNode(**node)
             else:
-                self.nodes[node["name"]] = Node(**node)
+                raise ValueError(
+                    f'Node must be either "input" or "calculation". Bad node definition: {node}'
+                )
+
         self._check_valid_definitions()
         self._rank_nodes()
 
@@ -358,7 +363,7 @@ class NodesCollection:
         """
         for node in self.nodes.values():
             # Check if the node is an input node
-            if node.input_type is not None:
+            if node.node_type is not None:
                 # If value percentiles are defined and is a 3 element tuple, use the median (50th percentile)
                 if all([node.value_low, node.value_mid, node.value_high]):
                     try:

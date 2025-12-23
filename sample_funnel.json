@@ -2,7 +2,7 @@
     {
         "name": "total_users",
         "format_str": "",
-        "input_type": "input",
+        "node_type": "input",
         "value_percentiles": [
             1000.0,
             5000.0,
@@ -17,7 +17,7 @@
     {
         "name": "subscribe_rate",
         "format_str": ".2%",
-        "input_type": "input",
+        "node_type": "input",
         "value_percentiles": [
             0.45,
             0.5,
@@ -32,7 +32,7 @@
     {
         "name": "ctr",
         "format_str": ".2%",
-        "input_type": "input",
+        "node_type": "input",
         "value_percentiles": [
             0.08,
             0.1,
@@ -47,7 +47,7 @@
     {
         "name": "sale_success_rate",
         "format_str": ".2%",
-        "input_type": "input",
+        "node_type": "input",
         "value_percentiles": [
             0.1,
             0.3,
@@ -62,7 +62,7 @@
     {
         "name": "total_subscribers",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "value_percentiles": null,
         "long_name": "Total Subscribers",
         "description": null,
@@ -74,7 +74,7 @@
     {
         "name": "total_clicks",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "value_percentiles": null,
         "long_name": "Total Clicks",
         "description": null,
@@ -86,7 +86,7 @@
     {
         "name": "total_sales",
         "format_str": "",
-        "input_type": "calculation",
+        "node_type": "calculation",
         "value_percentiles": null,
         "long_name": "Total Sales",
         "description": null,
